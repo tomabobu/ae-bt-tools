@@ -5,9 +5,10 @@ var ColorSwatchesUI = (function () {
     // Private variables
     let csInterface;
     let statusTimeout;
-    let swatchSize = 30;
+    let defaultSwatchSize = 30;
     let library = null;
-    let hideCollapsedGroups = false;
+    let defaultHideCollapsedGroups = false;
+    let defaultHideGroupNames = false;
 
     /**
      * Initialize the UI
@@ -30,56 +31,69 @@ var ColorSwatchesUI = (function () {
         // Load the library and populate UI
         ColorSwatches.loadLibrary(function (lib) {
             library = lib;
-            if (library.swatchSize) {
-                swatchSize = library.swatchSize;
+            if (!library.swatchSize) {
+                library.swatchSize = defaultSwatchSize;
             }
-            if (Object.hasOwn(library, 'hideCollapsedGroups')) {
-                console.log('library:', library.hideCollapsedGroups);
-                hideCollapsedGroups = library.hideCollapsedGroups;
+            if (!Object.hasOwn(library, 'hideCollapsedGroups')) {
+                library.hideCollapsedGroups = defaultHideCollapsedGroups;
             }
-            console.log(library.hideCollapsedGroups);
+            if (!Object.hasOwn(library, 'hideGroupNames')) {
+                library.hideGroupNames = defaultHideGroupNames;
+            }
+
+
+            container.innerHTML = `
+                <div class="color-swatches-container">
+                    <div class="scroll-container" id="swatch-scroll-container">
+                        <div id="swatch-area"></div>
+                       
+                        <!-- Status message -->
+                        <div class="status-text" id="status-message"></div>
+                        
+                        <!-- Management section -->
+                        <div class="management-section">
+                        <div class="section-header" id="manage-header">
+                        <button class="toggle-btn" id="manage-toggle">▼</button>
+                        <h3>Library Management</h3>
+                        </div>
+                        <div class="section-content" id="manage-content">
+                                <!-- Swatch size slider -->
+                                <div class="slider-container">
+                                    <label for="swatch-size-slider">Swatch Size:</label>
+                                    <input type="range" id="swatch-size-slider" min="3" max="100" value="${library.swatchSize}">
+                                </div>
+                                <div class="control-group">
+                                    <label class="checkbox-container">
+                                        <input type="checkbox" id="hideGroupNames" >
+                                        <span class="checkmark"></span>
+                                        Hide Group Names
+                                    </label>
+                                </div>
+                                <div class="control-group">
+                                    <label class="checkbox-container">
+                                        <input type="checkbox" id="hideCollapsedGroups">
+                                        <span class="checkmark"></span>
+                                        Hide Collapsed Groups
+                                    </label>
+                                </div>
+
+                                <button id="btn-import-replace" class="btn-full">Import (Replace)</button>
+                                <button id="btn-import-add" class="btn-full">Import (Add)</button>
+                                <button id="btn-export" class="btn-full">Export</button>
+                                <button id="btn-clear" class="btn-full">Clear</button>
+                            </div>
+                        </div>
+                          
+                        
+                      
+                    </div>
+                </div>
+            `;
             populateSwatches();
             setupEventListeners();
+            addCheckboxListener("hideCollapsedGroups", "hideCollapsedGroups");
+            addCheckboxListener("hideGroupNames", "hideGroupNames");
         });
-        container.innerHTML = `
-            <div class="color-swatches-container">
-                <div class="scroll-container" id="swatch-scroll-container">
-                    <div id="swatch-area"></div>
-                   
-                    <!-- Status message -->
-                    <div class="status-text" id="status-message"></div>
-                    
-                    <!-- Management section -->
-                    <div class="management-section">
-                    <div class="section-header" id="manage-header">
-                    <button class="toggle-btn" id="manage-toggle">▼</button>
-                    <h3>Library Management</h3>
-                    </div>
-                    <div class="section-content" id="manage-content">
-                            <!-- Swatch size slider -->
-                            <div class="slider-container">
-                                <label for="swatch-size-slider">Swatch Size:</label>
-                                <input type="range" id="swatch-size-slider" min="3" max="100" value="${swatchSize}">
-                            </div>
-                            <div class="control-group">
-                                <label class="checkbox-container">
-                                    <input type="checkbox" id="hideCollapsedGroups" ${hideCollapsedGroups ? 'checked' : ''}>
-                                    <span class="checkmark"></span>
-                                    Hide Collapsed Groups
-                                </label>
-                            </div>
-                            <button id="btn-import-replace" class="btn-full">Import (Replace)</button>
-                            <button id="btn-import-add" class="btn-full">Import (Add)</button>
-                            <button id="btn-export" class="btn-full">Export</button>
-                            <button id="btn-clear" class="btn-full">Clear</button>
-                        </div>
-                    </div>
-                      
-                    
-                  
-                </div>
-            </div>
-        `;
 
 
     }
@@ -108,20 +122,29 @@ var ColorSwatchesUI = (function () {
                 <div class="group-swatches ${group.collapsed ? 'hidden' : ''}" id="group-${groupIndex}">
                 </div>
             `;
-            if (!(group.collapsed && hideCollapsedGroups)) {
+            if (library.hideGroupNames) {
+                groupElement.innerHTML = `<div class="group-swatches" id="group-${groupIndex}">`;
+            }
+            let show = true;
+
+            if (group.collapsed && library.hideCollapsedGroups) {
+                show = false;
+            }
+
+            if (show) {
                 swatchArea.appendChild(groupElement);
             }
 
             // Add swatches to group
             const swatchesContainer = groupElement.querySelector(`#group-${groupIndex}`);
 
-            if (!group.collapsed && group.swatches) {
+            if ((!group.collapsed || library.hideGroupNames) && group.swatches) {
                 group.swatches.forEach((swatch, swatchIndex) => {
                     const swatchElement = document.createElement('div');
                     swatchElement.className = 'color-swatch';
                     swatchElement.title = `${swatch.name} ${swatch.hex}`;
                     swatchElement.style.backgroundColor = swatch.hex;
-                    swatchElement.style.width = swatchElement.style.height = `${swatchSize}px`;
+                    swatchElement.style.width = swatchElement.style.height = `${library.swatchSize}px`;
                     swatchElement.dataset.groupIndex = groupIndex;
                     swatchElement.dataset.swatchIndex = swatchIndex;
                     swatchesContainer.appendChild(swatchElement);
@@ -132,7 +155,7 @@ var ColorSwatchesUI = (function () {
         // Add event listeners to swatches and group toggles
         addSwatchEventListeners();
         addGroupToggleListeners();
-        addCheckboxListener();
+
     }
 
     /**
@@ -207,30 +230,30 @@ var ColorSwatchesUI = (function () {
     /**
      * Add event listeners to group checkbox
      */
-    function addCheckboxListener() {
+    function addCheckboxListener(elementId, propName) {
 
-        const hideCollapsedCheckbox = document.getElementById('hideCollapsedGroups');
+        const checkbox = document.getElementById(elementId);
 
         // Update initial status based on loaded data
-        if (hideCollapsedCheckbox) {
+        if (checkbox) {
             // Set the checkbox state to match the loaded setting
-            hideCollapsedCheckbox.checked = hideCollapsedGroups;
+            checkbox.checked = library[propName];
 
             // If using custom checkmark styling, you might need to trigger visual updates
-            if (hideCollapsedGroups) {
-                hideCollapsedCheckbox.parentElement.classList.add('checked');
+            if (library[propName]) {
+                checkbox.parentElement.classList.add('checked');
             } else {
-                hideCollapsedCheckbox.parentElement.classList.remove('checked');
+                checkbox.parentElement.classList.remove('checked');
             }
         }
 
 
         // Add listener
-        if (hideCollapsedCheckbox) {
-            hideCollapsedCheckbox.addEventListener('change', function () {
-                hideCollapsedGroups = this.checked;
+        if (checkbox) {
+            checkbox.addEventListener('change', function () {
+                library[propName] = this.checked;
 
-                ColorSwatches.updateHideCollapsedGroups(hideCollapsedGroups, function () {
+                ColorSwatches.updateProp(library[propName], propName, function () {
                     // Reload library after toggling
                     ColorSwatches.loadLibrary(function (lib) {
                         library = lib;
@@ -328,8 +351,8 @@ var ColorSwatchesUI = (function () {
 
         // Swatch size slider
         document.getElementById('swatch-size-slider').addEventListener('input', function () {
-            swatchSize = parseInt(this.value);
-            ColorSwatches.updateSize(swatchSize, function () {
+            library.swatchSize = parseInt(this.value);
+            ColorSwatches.updateProp(library.swatchSize, "swatchSize", function () {
                 // Reload library after toggling
                 ColorSwatches.loadLibrary(function (lib) {
                     library = lib;

@@ -282,29 +282,17 @@ var ColorSwatches = (function () {
     /**
      * Update swatch size
      */
-    function updateSize(newSize, callback) {
+    function updateProp(newSize, propName, callback) {
 
         if (library) {
-            library.swatchSize = newSize;
+            library[propName] = newSize;
             saveLibraryToModule(callback);
             return true;
         }
         if (callback) callback(false);
         return false;
     }
-    /**
-     * Update collapsed groups show
-     */
-    function updateHideCollapsedGroups(newValue, callback) {
 
-        if (library) {
-            library.hideCollapsedGroups = newValue;
-            saveLibraryToModule(callback);
-            return true;
-        }
-        if (callback) callback(false);
-        return false;
-    }
 
 
 
@@ -328,7 +316,6 @@ var ColorSwatches = (function () {
         updateSwatch: updateSwatch,
         deleteSwatch: deleteSwatch,
         toggleGroup: toggleGroup,
-        updateSize: updateSize,
-        updateHideCollapsedGroups: updateHideCollapsedGroups
+        updateProp: updateProp,
     };
 })();
