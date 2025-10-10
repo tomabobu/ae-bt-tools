@@ -88,6 +88,16 @@ var ColorSwatchesUI = (function () {
                       
                     </div>
                 </div>
+                <div id="hexModal" class="modal" style="display:none;">
+                    <div class="modal-content">
+                        <h3>Edit Swatch HEX</h3>
+                        <input type="text" id="hexInput" placeholder="#FF0000">
+                        <div class="modal-actions">
+                        <button id="hexCancel">Cancel</button>
+                        <button id="hexOk">OK</button>
+                        </div>
+                    </div>
+                </div>
             `;
             populateSwatches();
             setupEventListeners();
@@ -387,6 +397,7 @@ var ColorSwatchesUI = (function () {
 
         menu.innerHTML = `
             <div class="menu-item" data-action="edit">Edit</div>
+            <div class="menu-item" data-action="editHex">Edit by HEX...</div>
             <div class="menu-item" data-action="delete">Delete</div>
             <div class="menu-item" data-action="copy">Copy HEX</div>
         `;
@@ -399,6 +410,36 @@ var ColorSwatchesUI = (function () {
                 const action = this.dataset.action;
 
                 switch (action) {
+                    case 'editHex':
+                        const modal = document.getElementById('hexModal');
+                        const input = document.getElementById('hexInput');
+                        modal.style.display = 'flex';
+                        input.value = swatch.hex || '#FFFFFF';
+
+                        // OK button
+                        document.getElementById('hexOk').onclick = () => {
+                            const newHex = input.value.trim();
+                            if (newHex && /^#([0-9A-F]{3}){1,2}$/i.test(newHex)) {
+                                ColorSwatches.updateSwatch(groupIndex, swatchIndex, { hex: newHex }, function () {
+                                    ColorSwatches.loadLibrary(function (lib) {
+                                        library = lib;
+                                        populateSwatches();
+                                        modal.style.display = 'none';
+                                    });
+                                });
+
+
+                            } else {
+                                showStatus('Invalid HEX format.', 'error');
+                                modal.style.display = 'none';
+                            }
+                        };
+
+                        // Cancel button
+                        document.getElementById('hexCancel').onclick = () => {
+                            modal.style.display = 'none';
+                        };
+                        break;
                     case 'edit':
                         showColorPicker(swatch.hex, function (newHex) {
                             if (newHex) {
