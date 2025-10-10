@@ -1,0 +1,307 @@
+/**
+ * Color Swatches Module CSS
+ */
+
+.color-swatches-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.scroll-container {
+    flex-grow: 1;
+    overflow-y: auto;
+
+}
+
+#swatch-area {
+    /* display: block; */
+    /* flex-wrap: wrap; */
+    gap: 4px;
+
+}
+
+/* Swatch groups */
+.swatch-group {
+    margin-bottom: 3px;
+    background-color: #2a2a2a;
+    /* border-radius: 3px; */
+    overflow: hidden;
+}
+
+.group-header {
+    display: flex;
+    align-items: center;
+    padding: 2px 0px;
+    background-color: #333;
+    cursor: pointer;
+    padding-right: 20px;
+}
+
+.group-header .toggle-btn {
+    background: none;
+    border: none;
+    color: #e6e6e6;
+    font-size: 12px;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 5px;
+}
+
+.group-header span {
+    font-weight: 500;
+    color: #e6e6e6;
+}
+
+.group-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 0px;
+    gap: 1px;
+}
+
+.group-swatches.hidden {
+    display: none;
+}
+
+/* Individual swatches */
+.color-swatch {
+    border-radius: 3px;
+    cursor: pointer;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+    position: relative;
+}
+
+.color-swatch:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    z-index: 1;
+}
+
+.color-swatch:active {
+    transform: scale(0.95);
+}
+
+/* Management section */
+.management-section {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    background-color: #2a2a2a;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    background-color: #333;
+    padding: 8px;
+    cursor: pointer;
+}
+
+.section-header h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.toggle-btn {
+    background: none;
+    border: none;
+    color: #e6e6e6;
+    font-size: 12px;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 5px;
+}
+
+.section-content {
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Buttons */
+.btn-full {
+    background-color: #2d8ceb;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.2s;
+}
+
+.btn-full:hover {
+    background-color: #1a7ad9;
+}
+
+.btn-full:active {
+    background-color: #1569c2;
+}
+
+/* Slider */
+.slider-container {
+    display: flex;
+    align-items: center;
+    margin: 10px 0;
+    padding: 10px;
+    background-color: #2a2a2a;
+    border-radius: 3px;
+}
+
+.slider-container label {
+    margin-right: 10px;
+    font-size: 12px;
+    color: #e6e6e6;
+}
+
+input[type="range"] {
+    flex-grow: 1;
+    -webkit-appearance: none;
+    height: 5px;
+    border-radius: 3px;
+    background: #444;
+    outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: #2d8ceb;
+    cursor: pointer;
+}
+
+/* Status message */
+.status-text {
+    margin-top: 10px;
+    padding: 8px;
+    border-radius: 3px;
+    text-align: center;
+    font-size: 12px;
+    min-height: 16px;
+}
+
+.status-text.info {
+    background-color: #2a2a2a;
+    color: #e6e6e6;
+}
+
+.status-text.error {
+    background-color: rgba(255, 0, 0, 0.2);
+    color: #ff6b6b;
+}
+
+.status-text.success {
+    background-color: rgba(0, 128, 0, 0.2);
+    color: #7cfc00;
+}
+
+/* Context menu */
+.context-menu {
+    position: fixed;
+    background-color: #333;
+    border-radius: 3px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    min-width: 120px;
+}
+
+.menu-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    color: #e6e6e6;
+}
+
+.menu-item:hover {
+    background-color: #2d8ceb;
+}
+
+.menu-item:first-child {
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+}
+
+.menu-item:last-child {
+    border-bottom-left-radius: 3px;
+    border-bottom-right-radius: 3px;
+}
+
+/* Add new swatch button */
+.add-swatch {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px dashed #555;
+    border-radius: 3px;
+    cursor: pointer;
+    background-color: #333;
+    color: #e6e6e6;
+    font-size: 16px;
+    transition: background-color 0.2s;
+}
+
+.add-swatch:hover {
+    background-color: #444;
+}
+
+/* Add new group button */
+.add-group-btn {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    background-color: #2a2a2a;
+    border-radius: 3px;
+    cursor: pointer;
+    color: #e6e6e6;
+    transition: background-color 0.2s;
+}
+
+.add-group-btn:hover {
+    background-color: #333;
+}
+
+.add-group-btn span {
+    margin-left: 5px;
+    font-size: 12px;
+}
+
+/* Empty state */
+.empty-library {
+    padding: 20px;
+    text-align: center;
+    color: #999;
+    background-color: #2a2a2a;
+    border-radius: 3px;
+    margin-bottom: 15px;
+}
+
+.empty-library p {
+    margin-bottom: 15px;
+}
+
+/* Color input (hidden but used for color picker) */
+input[type="color"] {
+    position: absolute;
+    visibility: hidden;
+    width: 0;
+    height: 0;
+}

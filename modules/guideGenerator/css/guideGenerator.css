@@ -1,0 +1,145 @@
+/**
+ * Guide Generator Module CSS
+ */
+
+/* Guide Generator container */
+.guide-generator-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* Initial state */
+.guide-initial-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 20px;
+    text-align: center;
+}
+
+.guide-initial-state p {
+    margin-bottom: 20px;
+    color: #b8b8b8;
+}
+
+.guide-initial-state button {
+    min-width: 150px;
+}
+
+/* Config state */
+.guide-config-state {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Bounding box section */
+.bbox-section {
+    background-color: #2a2a2a;
+    padding: 12px;
+    border-radius: 3px;
+    margin-bottom: 16px;
+}
+
+.bbox-section h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* Grid configuration section */
+.grid-config-section {
+    background-color: #2a2a2a;
+    padding: 12px;
+    border-radius: 3px;
+    margin-bottom: 16px;
+}
+
+.grid-config-section h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* Info display for calculated cell sizes */
+.cell-size-info {
+    background-color: #3a3a3a;
+    padding: 8px 12px;
+    border-radius: 3px;
+    margin-top: 12px;
+    font-family: monospace;
+}
+
+/* Actions section */
+.guide-actions {
+    display: flex;
+    justify-content: flex-start;
+    gap: 20px;
+    margin-top: 16px;
+}
+
+/* Spinner for loading states */
+.guide-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, .3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Input with up/down buttons */
+.number-input-group {
+    display: flex;
+    align-items: center;
+}
+
+.number-input-group input {
+    font-size: 14px;
+    width: 80px;
+    text-align: center;
+}
+
+.number-input-group .spinner-buttons {
+    display: flex;
+    flex-direction: column;
+    margin-left: 4px;
+}
+
+.number-input-group .spinner-button {
+    background-color: #555;
+    border: none;
+    color: #e6e6e6;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 10px;
+    padding: 0;
+    min-width: 0;
+}
+
+.number-input-group .spinner-button:first-child {
+    border-radius: 2px 2px 0 0;
+}
+
+.number-input-group .spinner-button:last-child {
+    border-radius: 0 0 2px 2px;
+}
+
+.number-input-group .spinner-button:hover {
+    background-color: #666;
+}

@@ -1,0 +1,273 @@
+/**
+ * Main CSS file for Script Library
+ * This provides base styling for the panel framework and common elements
+ */
+
+/* Base styles for the entire panel */
+body {
+    font-family: 'Segoe UI', 'San Francisco', 'Lucida Grande', Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #232323;
+    color: #e6e6e6;
+    font-size: 14px;
+    overflow: hidden;
+    height: 100vh;
+    box-sizing: border-box;
+    user-select: none;
+}
+
+/* Apply border-box to all elements */
+* {
+    box-sizing: inherit;
+}
+
+/* App container styles */
+#app {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Tab navigation styles */
+.tab-nav {
+    display: flex;
+    background-color: #2a2a2a;
+    border-bottom: 1px solid #3a3a3a;
+    height: 34px;
+    flex-shrink: 0;
+}
+
+.tab-button {
+    background: transparent;
+    border: none;
+    color: #b8b8b8;
+    padding: 0 16px;
+    height: 34px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.2s, color 0.2s;
+    outline: none;
+    position: relative;
+}
+
+.tab-button:hover {
+    background-color: #333333;
+    color: #e6e6e6;
+}
+
+.tab-button.active {
+    background-color: #232323;
+    color: #2d8ceb;
+}
+
+.tab-button.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: #2d8ceb;
+}
+
+/* Tab content container */
+.tab-content {
+    flex-grow: 1;
+    overflow: auto;
+    position: relative;
+    padding: 10px 2px;
+}
+
+.tab-pane {
+    display: none;
+    height: 100%;
+}
+
+.tab-pane.active {
+    display: block;
+}
+
+/* Common UI component styles */
+h2 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #e6e6e6;
+}
+
+.button-row {
+    display: flex;
+    gap: 8px;
+    margin: 12px 0;
+}
+
+button {
+    background-color: #2d8ceb;
+    color: white;
+    border: none;
+    border-radius: 2px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.2s;
+}
+
+button:hover {
+    background-color: #1a7ad9;
+}
+
+button:active {
+    background-color: #1569c2;
+}
+
+button:disabled {
+    background-color: #555555;
+    color: #999999;
+    cursor: not-allowed;
+}
+
+/* Secondary button style */
+button.secondary {
+    background-color: #555555;
+    color: #e6e6e6;
+}
+
+button.secondary:hover {
+    background-color: #666666;
+}
+
+button.secondary:active {
+    background-color: #777777;
+}
+
+/* Input styles */
+.input-group {
+    margin-bottom: 10px;
+}
+
+.input-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+label {
+    display: inline-block;
+    margin-bottom: 4px;
+    color: #b8b8b8;
+}
+
+input[type="number"],
+input[type="text"],
+select {
+    background-color: #3a3a3a;
+    border: 1px solid #555555;
+    color: #e6e6e6;
+    padding: 6px 8px;
+    border-radius: 2px;
+    width: 100%;
+    font-size: 12px;
+}
+
+input[type="number"]:focus,
+input[type="text"]:focus,
+select:focus {
+    outline: none;
+    border-color: #2d8ceb;
+}
+
+/* Checkbox styles */
+.checkbox-group {
+    margin: 10px 0;
+    display: flex;
+    align-items: center;
+}
+
+.checkbox-group input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+/* Info text */
+.info-text {
+    margin: 10px 0;
+    padding: 8px;
+    background-color: #3a3a3a;
+    border-radius: 2px;
+    font-size: 11px;
+    color: #b8b8b8;
+}
+
+/* Divider */
+.divider {
+    height: 1px;
+    background-color: #3a3a3a;
+    margin: 12px 0;
+}
+
+/* Panel section */
+.panel-section {
+    margin-bottom: 16px;
+    padding: 12px;
+    background-color: #2a2a2a;
+    border-radius: 3px;
+}
+
+.panel-section-title {
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #e6e6e6;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #2a2a2a;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #555555;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #666666;
+}
+
+/* Utility classes */
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.mt-10 {
+    margin-top: 10px;
+}
+
+.mb-10 {
+    margin-bottom: 10px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 400px) {
+    .tab-button {
+        padding: 0 10px;
+    }
+
+    .tab-content {
+        padding: 8px;
+    }
+}
