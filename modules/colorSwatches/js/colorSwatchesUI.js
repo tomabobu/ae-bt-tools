@@ -45,22 +45,23 @@ var ColorSwatchesUI = (function () {
                     
                     <!-- Management section -->
                     <div class="panel-section management-section">
-                        <div class="section-header" id="manage-header">
-                            <button class="toggle-btn" id="manage-toggle">▼</button>
-                            <h3>Library Management</h3>
-                        </div>
-                        <div class="section-content" id="manage-content">
+                    <div class="section-header" id="manage-header">
+                    <button class="toggle-btn" id="manage-toggle">▼</button>
+                    <h3>Library Management</h3>
+                    </div>
+                    <div class="section-content" id="manage-content">
+                            <!-- Swatch size slider -->
+                            <div class="slider-container">
+                                <label for="swatch-size-slider">Swatch Size:</label>
+                                <input type="range" id="swatch-size-slider" min="3" max="100" value="${swatchSize}">
+                            </div>
                             <button id="btn-import-replace" class="btn-full">Import (Replace)</button>
                             <button id="btn-import-add" class="btn-full">Import (Add)</button>
                             <button id="btn-export" class="btn-full">Export</button>
                             <button id="btn-clear" class="btn-full">Clear</button>
                         </div>
                     </div>
-                       <!-- Swatch size slider -->
-                    <div class="slider-container">
-                        <label for="swatch-size-slider">Swatch Size:</label>
-                        <input type="range" id="swatch-size-slider" min="3" max="100" value="${swatchSize}">
-                    </div>
+                      
                     
                   
                 </div>
