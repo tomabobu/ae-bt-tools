@@ -36,6 +36,9 @@ var CubicBezierEditor = (function () {
         this.svg.setAttribute('class', 'cubic-bezier-canvas');
         this.svg.setAttribute('width', this.options.width);
         this.svg.setAttribute('height', this.options.height);
+        // ADD VIEWBOX - This is the key fix!
+        this.svg.setAttribute('viewBox', '0 0 100 100');
+        this.svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
         this.container.appendChild(this.svg);
 
         // Get container dimensions
@@ -45,6 +48,15 @@ var CubicBezierEditor = (function () {
         if (this.options.showGrid) {
             this.drawGrid();
         }
+
+        // Create control lines
+        this.controlLine1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        this.controlLine1.setAttribute('class', 'bezier-control-line');
+        this.svg.appendChild(this.controlLine1);
+
+        this.controlLine2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        this.controlLine2.setAttribute('class', 'bezier-control-line');
+        this.svg.appendChild(this.controlLine2);
 
         // Create bezier curve
         this.path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -77,16 +89,16 @@ var CubicBezierEditor = (function () {
         // Major axes
         var xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
         xAxis.setAttribute('x1', '0');
-        xAxis.setAttribute('y1', '100%');
-        xAxis.setAttribute('x2', '100%');
-        xAxis.setAttribute('y2', '100%');
+        xAxis.setAttribute('y1', '100');
+        xAxis.setAttribute('x2', '100');
+        xAxis.setAttribute('y2', '100');
         xAxis.setAttribute('class', 'bezier-axis');
 
         var yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
         yAxis.setAttribute('x1', '0');
         yAxis.setAttribute('y1', '0');
         yAxis.setAttribute('x2', '0');
-        yAxis.setAttribute('y2', '100%');
+        yAxis.setAttribute('y2', '100');
         yAxis.setAttribute('class', 'bezier-axis');
 
         gridGroup.appendChild(xAxis);
@@ -96,10 +108,10 @@ var CubicBezierEditor = (function () {
         for (var i = 1; i < 10; i++) {
             var x = i * 10;
             var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-            line.setAttribute('x1', x + '%');
+            line.setAttribute('x1', x);
             line.setAttribute('y1', '0');
-            line.setAttribute('x2', x + '%');
-            line.setAttribute('y2', '100%');
+            line.setAttribute('x2', x);
+            line.setAttribute('y2', '100');
             line.setAttribute('class', i % 5 === 0 ? 'bezier-grid-major' : 'bezier-grid');
             gridGroup.appendChild(line);
         }
@@ -109,9 +121,9 @@ var CubicBezierEditor = (function () {
             var y = j * 10;
             var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
             line.setAttribute('x1', '0');
-            line.setAttribute('y1', y + '%');
-            line.setAttribute('x2', '100%');
-            line.setAttribute('y2', y + '%');
+            line.setAttribute('y1', y);
+            line.setAttribute('x2', '100');
+            line.setAttribute('y2', y);
             line.setAttribute('class', j % 5 === 0 ? 'bezier-grid-major' : 'bezier-grid');
             gridGroup.appendChild(line);
         }
@@ -166,7 +178,20 @@ var CubicBezierEditor = (function () {
     CubicBezierEditor.prototype.updateCurve = function () {
         var [p1x, p1y, p2x, p2y] = this.values;
 
-        // Draw path
+        // Update control lines
+        // Line from start point (0,100) to P1
+        this.controlLine1.setAttribute('x1', '0');
+        this.controlLine1.setAttribute('y1', '100');
+        this.controlLine1.setAttribute('x2', p1x * 100);
+        this.controlLine1.setAttribute('y2', (1 - p1y) * 100);
+
+        // Line from end point (100,0) to P2
+        this.controlLine2.setAttribute('x1', '100');
+        this.controlLine2.setAttribute('y1', '0');
+        this.controlLine2.setAttribute('x2', p2x * 100);
+        this.controlLine2.setAttribute('y2', (1 - p2y) * 100);
+
+        // Draw path - coordinates are now in viewBox units (0-100)
         var pathStr = `M0,100 C${p1x * 100},${(1 - p1y) * 100} ${p2x * 100},${(1 - p2y) * 100} 100,0`;
         this.path.setAttribute('d', pathStr);
 
@@ -211,8 +236,23 @@ var CubicBezierEditor = (function () {
             }
 
             var pos = cubic(progress);
-            self.previewDot.style.left = (pos.x * 100) + '%';
-            self.previewDot.style.top = ((1 - pos.y) * 100) + '%';
+
+            // Convert SVG coordinates to screen coordinates considering aspect ratio
+            var svgRect = self.svg.getBoundingClientRect();
+            var containerRect = self.container.getBoundingClientRect();
+
+            // Calculate the actual rendered position of the SVG content
+            var svgSize = Math.min(svgRect.width, svgRect.height);
+            var offsetX = (svgRect.width - svgSize) / 2;
+            var offsetY = (svgRect.height - svgSize) / 2;
+
+            // Position relative to container
+            var screenX = offsetX + (pos.x * svgSize);
+            var screenY = offsetY + ((1 - pos.y) * svgSize);
+
+            // Convert to percentage of container
+            self.previewDot.style.left = ((screenX / containerRect.width) * 100) + '%';
+            self.previewDot.style.top = ((screenY / containerRect.height) * 100) + '%';
         }
 
         this.animationFrame = requestAnimationFrame(animate);
@@ -383,11 +423,6 @@ var CubicBezierEditor = (function () {
      * Set new values for the bezier curve
      * @param {Array} values - Array of 4 values [p1x, p1y, p2x, p2y]
      */
-
-    /**
- * Set new values for the bezier curve
- * @param {Array} values - Array of 4 values [p1x, p1y, p2x, p2y]
- */
     CubicBezierEditor.prototype.setValues = function (values) {
         if (!Array.isArray(values) || values.length !== 4) {
             console.error('Invalid values array. Must be an array of 4 numbers.');

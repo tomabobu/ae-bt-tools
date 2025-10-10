@@ -2,7 +2,7 @@
 # Fix clear button message
 # change current window.prompt with a new modal for the clear library
 # Library Management fold when click on whole div not just the arrow
-# Fix bug that is not taking into consideration hide checkboxes when importing json
+# Fix bug that is not taking into consideration hide checkboxes when importing json (menu not attached to swatches)
 # Add group renaming
 # For group - add new swatch
 # For swatch editing - use different color picker with hex value

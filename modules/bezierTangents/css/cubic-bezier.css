@@ -175,3 +175,9 @@
     height: 100%;
     color: #999;
 }
+
+.bezier-control-line {
+    stroke: rgba(255, 255, 255, 0.3);
+    stroke-width: 1;
+    stroke-dasharray: 3, 3;
+}
