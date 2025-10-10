@@ -44,13 +44,13 @@ body {
     background: transparent;
     border: none;
     color: #b8b8b8;
-    padding: 0 16px;
     height: 34px;
     cursor: pointer;
     font-size: 12px;
     transition: background-color 0.2s, color 0.2s;
     outline: none;
     position: relative;
+    padding: 0 10px;
 }
 
 .tab-button:hover {
@@ -78,7 +78,8 @@ body {
     flex-grow: 1;
     overflow: auto;
     position: relative;
-    padding: 10px 2px;
+
+    padding: 8px;
 }
 
 .tab-pane {
@@ -259,15 +260,4 @@ select:focus {
 
 .hidden {
     display: none !important;
-}
-
-/* Responsive adjustments */
-@media (max-width: 400px) {
-    .tab-button {
-        padding: 0 10px;
-    }
-
-    .tab-content {
-        padding: 8px;
-    }
 }

@@ -292,6 +292,19 @@ var ColorSwatches = (function () {
         if (callback) callback(false);
         return false;
     }
+    /**
+     * Update collapsed groups show
+     */
+    function updateHideCollapsedGroups(newValue, callback) {
+
+        if (library) {
+            library.hideCollapsedGroups = newValue;
+            saveLibraryToModule(callback);
+            return true;
+        }
+        if (callback) callback(false);
+        return false;
+    }
 
 
 
@@ -316,5 +329,6 @@ var ColorSwatches = (function () {
         deleteSwatch: deleteSwatch,
         toggleGroup: toggleGroup,
         updateSize: updateSize,
+        updateHideCollapsedGroups: updateHideCollapsedGroups
     };
 })();

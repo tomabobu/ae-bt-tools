@@ -7,6 +7,7 @@ var ColorSwatchesUI = (function () {
     let statusTimeout;
     let swatchSize = 30;
     let library = null;
+    let hideCollapsedGroups = false;
 
     /**
      * Initialize the UI
@@ -32,6 +33,11 @@ var ColorSwatchesUI = (function () {
             if (library.swatchSize) {
                 swatchSize = library.swatchSize;
             }
+            if (Object.hasOwn(library, 'hideCollapsedGroups')) {
+                console.log('library:', library.hideCollapsedGroups);
+                hideCollapsedGroups = library.hideCollapsedGroups;
+            }
+            console.log(library.hideCollapsedGroups);
             populateSwatches();
             setupEventListeners();
         });
@@ -44,7 +50,7 @@ var ColorSwatchesUI = (function () {
                     <div class="status-text" id="status-message"></div>
                     
                     <!-- Management section -->
-                    <div class="panel-section management-section">
+                    <div class="management-section">
                     <div class="section-header" id="manage-header">
                     <button class="toggle-btn" id="manage-toggle">▼</button>
                     <h3>Library Management</h3>
@@ -54,6 +60,13 @@ var ColorSwatchesUI = (function () {
                             <div class="slider-container">
                                 <label for="swatch-size-slider">Swatch Size:</label>
                                 <input type="range" id="swatch-size-slider" min="3" max="100" value="${swatchSize}">
+                            </div>
+                            <div class="control-group">
+                                <label class="checkbox-container">
+                                    <input type="checkbox" id="hideCollapsedGroups" ${hideCollapsedGroups ? 'checked' : ''}>
+                                    <span class="checkmark"></span>
+                                    Hide Collapsed Groups
+                                </label>
                             </div>
                             <button id="btn-import-replace" class="btn-full">Import (Replace)</button>
                             <button id="btn-import-add" class="btn-full">Import (Add)</button>
@@ -95,7 +108,9 @@ var ColorSwatchesUI = (function () {
                 <div class="group-swatches ${group.collapsed ? 'hidden' : ''}" id="group-${groupIndex}">
                 </div>
             `;
-            swatchArea.appendChild(groupElement);
+            if (!(group.collapsed && hideCollapsedGroups)) {
+                swatchArea.appendChild(groupElement);
+            }
 
             // Add swatches to group
             const swatchesContainer = groupElement.querySelector(`#group-${groupIndex}`);
@@ -117,6 +132,7 @@ var ColorSwatchesUI = (function () {
         // Add event listeners to swatches and group toggles
         addSwatchEventListeners();
         addGroupToggleListeners();
+        addCheckboxListener();
     }
 
     /**
@@ -185,6 +201,45 @@ var ColorSwatchesUI = (function () {
                 });
             });
         }
+    }
+
+
+    /**
+     * Add event listeners to group checkbox
+     */
+    function addCheckboxListener() {
+
+        const hideCollapsedCheckbox = document.getElementById('hideCollapsedGroups');
+
+        // Update initial status based on loaded data
+        if (hideCollapsedCheckbox) {
+            // Set the checkbox state to match the loaded setting
+            hideCollapsedCheckbox.checked = hideCollapsedGroups;
+
+            // If using custom checkmark styling, you might need to trigger visual updates
+            if (hideCollapsedGroups) {
+                hideCollapsedCheckbox.parentElement.classList.add('checked');
+            } else {
+                hideCollapsedCheckbox.parentElement.classList.remove('checked');
+            }
+        }
+
+
+        // Add listener
+        if (hideCollapsedCheckbox) {
+            hideCollapsedCheckbox.addEventListener('change', function () {
+                hideCollapsedGroups = this.checked;
+
+                ColorSwatches.updateHideCollapsedGroups(hideCollapsedGroups, function () {
+                    // Reload library after toggling
+                    ColorSwatches.loadLibrary(function (lib) {
+                        library = lib;
+                        populateSwatches();
+                    });
+                });
+            });
+        }
+
     }
 
 

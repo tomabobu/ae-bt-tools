@@ -12,6 +12,8 @@
 .scroll-container {
     flex-grow: 1;
     overflow-y: auto;
+    padding-right: 7px;
+    ;
 
 }
 
@@ -127,7 +129,7 @@
 }
 
 .section-content {
-    padding: 10px;
+    padding: 2px;
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -157,8 +159,8 @@
 .slider-container {
     display: flex;
     align-items: center;
-    margin: 10px 0;
-    padding: 10px;
+    margin: 10px 0 0 0;
+    padding: 0px;
     background-color: #2a2a2a;
     border-radius: 3px;
 }
@@ -304,4 +306,55 @@ input[type="color"] {
     visibility: hidden;
     width: 0;
     height: 0;
+}
+
+/* Hide collapsed groups checkbox */
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 12px;
+    margin: 8px 0;
+    user-select: none;
+}
+
+/* Hide the default checkbox */
+.checkbox-container input[type="checkbox"] {
+    display: none;
+}
+
+/* Style the custom checkmark */
+.checkmark {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    background-color: #3c3c3c;
+    border: 1px solid #666;
+    margin-right: 6px;
+    cursor: pointer;
+    position: relative;
+}
+
+/* Style when checked */
+.checkbox-container input[type="checkbox"]:checked+.checkmark {
+    background-color: #007acc;
+    border-color: #007acc;
+}
+
+/* Add a checkmark icon when checked */
+.checkbox-container input[type="checkbox"]:checked+.checkmark::after {
+    content: "";
+    position: absolute;
+    left: 3px;
+    top: -1px;
+    width: 4px;
+    height: 7px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+/* Hover effect */
+.checkmark:hover {
+    border-color: #007acc;
 }

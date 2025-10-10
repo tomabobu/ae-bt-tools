@@ -1,6 +1,7 @@
-# Fix export mode
+
 # Fix clear button message
-# Add checkbox to hide collaped
+# Library Management fold when click on whole div not just the arrow
+# Add Hide group names checkbox
 # Add group renaming
 # For group - add new swatch
 # For swatch editing - use different color picker with hex value
