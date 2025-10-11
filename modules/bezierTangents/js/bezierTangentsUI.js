@@ -69,7 +69,7 @@ var BezierTangentsUI = (function () {
     function initBezierEditor() {
         bezierEditor = new CubicBezierEditor('#bezier-canvas-container', {
             defaultValues: bezierValues,
-            showPreview: true,
+            showPreview: false,
             showGrid: true,
             onChange: function (values) {
                 bezierValues = values;
@@ -101,7 +101,7 @@ var BezierTangentsUI = (function () {
             // Create a small visualization of the curve
             const curve = document.createElement('div');
             curve.className = 'bezier-preset-curve';
-            curve.style.backgroundImage = `url("image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M0,24 C${preset.values[0] * 24},${24 - (preset.values[1] * 24)} ${preset.values[2] * 24},${24 - (preset.values[3] * 24)} 24,0' stroke='%23ffffff' fill='none' /%3E%3C/svg%3E")`;
+            curve.style.backgroundImage = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M0,24 C${preset.values[0] * 24},${24 - (preset.values[1] * 24)} ${preset.values[2] * 24},${24 - (preset.values[3] * 24)} 24,0' stroke='%23ffffff' fill='none' /%3E%3C/svg%3E")`;
 
             presetBtn.appendChild(curve);
             presetContainer.appendChild(presetBtn);

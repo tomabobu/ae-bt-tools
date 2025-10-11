@@ -4,6 +4,24 @@
  */
 var CubicBezierEditor = (function () {
     /**
+     * Helper function to create SVG elements
+     * @param {string} type - SVG element type (e.g., 'svg', 'path', 'line', 'circle')
+     * @param {Object} attributes - Object with attribute key-value pairs
+     * @returns {SVGElement}
+     */
+    function createSVGElement(type, attributes) {
+        var element = document.createElementNS('http://www.w3.org/2000/svg', type);
+        if (attributes) {
+            for (var key in attributes) {
+                if (attributes.hasOwnProperty(key)) {
+                    element.setAttribute(key, attributes[key]);
+                }
+            }
+        }
+        return element;
+    }
+
+    /**
      * Constructor for Cubic Bezier Editor
      * @param {string|Element} container - Container element or selector
      * @param {Object} options - Configuration options
@@ -32,13 +50,13 @@ var CubicBezierEditor = (function () {
      */
     CubicBezierEditor.prototype.init = function () {
         // Create SVG canvas
-        this.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        this.svg.setAttribute('class', 'cubic-bezier-canvas');
-        this.svg.setAttribute('width', this.options.width);
-        this.svg.setAttribute('height', this.options.height);
-        // ADD VIEWBOX - This is the key fix!
-        this.svg.setAttribute('viewBox', '0 0 100 100');
-        this.svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+        this.svg = createSVGElement('svg', {
+            'class': 'cubic-bezier-canvas',
+            'width': this.options.width,
+            'height': this.options.height,
+            'viewBox': '0 0 1 1',
+            'preserveAspectRatio': 'xMidYMid meet'
+        });
         this.container.appendChild(this.svg);
 
         // Get container dimensions
@@ -50,17 +68,20 @@ var CubicBezierEditor = (function () {
         }
 
         // Create control lines
-        this.controlLine1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        this.controlLine1.setAttribute('class', 'bezier-control-line');
+        this.controlLine1 = createSVGElement('line', {
+            'class': 'bezier-control-line'
+        });
         this.svg.appendChild(this.controlLine1);
 
-        this.controlLine2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        this.controlLine2.setAttribute('class', 'bezier-control-line');
+        this.controlLine2 = createSVGElement('line', {
+            'class': 'bezier-control-line'
+        });
         this.svg.appendChild(this.controlLine2);
 
         // Create bezier curve
-        this.path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        this.path.setAttribute('class', 'bezier-path');
+        this.path = createSVGElement('path', {
+            'class': 'bezier-path'
+        });
         this.svg.appendChild(this.path);
 
         // Create handles
@@ -83,48 +104,53 @@ var CubicBezierEditor = (function () {
      * Draw grid lines
      */
     CubicBezierEditor.prototype.drawGrid = function () {
-        var gridGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        gridGroup.setAttribute('class', 'bezier-grid-container');
+        var gridGroup = createSVGElement('g', {
+            'class': 'bezier-grid-container'
+        });
 
         // Major axes
-        var xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        xAxis.setAttribute('x1', '0');
-        xAxis.setAttribute('y1', '100');
-        xAxis.setAttribute('x2', '100');
-        xAxis.setAttribute('y2', '100');
-        xAxis.setAttribute('class', 'bezier-axis');
+        var xAxis = createSVGElement('line', {
+            'x1': '0',
+            'y1': '1',
+            'x2': '1',
+            'y2': '1',
+            'class': 'bezier-axis'
+        });
 
-        var yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        yAxis.setAttribute('x1', '0');
-        yAxis.setAttribute('y1', '0');
-        yAxis.setAttribute('x2', '0');
-        yAxis.setAttribute('y2', '100');
-        yAxis.setAttribute('class', 'bezier-axis');
+        var yAxis = createSVGElement('line', {
+            'x1': '0',
+            'y1': '0',
+            'x2': '0',
+            'y2': '1',
+            'class': 'bezier-axis'
+        });
 
         gridGroup.appendChild(xAxis);
         gridGroup.appendChild(yAxis);
 
         // Vertical grid lines
         for (var i = 1; i < 10; i++) {
-            var x = i * 10;
-            var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-            line.setAttribute('x1', x);
-            line.setAttribute('y1', '0');
-            line.setAttribute('x2', x);
-            line.setAttribute('y2', '100');
-            line.setAttribute('class', i % 5 === 0 ? 'bezier-grid-major' : 'bezier-grid');
+            var x = i * 0.1;
+            var line = createSVGElement('line', {
+                'x1': x.toString(),
+                'y1': '0',
+                'x2': x.toString(),
+                'y2': '1',
+                'class': i % 5 === 0 ? 'bezier-grid-major' : 'bezier-grid'
+            });
             gridGroup.appendChild(line);
         }
 
         // Horizontal grid lines
         for (var j = 1; j < 10; j++) {
-            var y = j * 10;
-            var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-            line.setAttribute('x1', '0');
-            line.setAttribute('y1', y);
-            line.setAttribute('x2', '100');
-            line.setAttribute('y2', y);
-            line.setAttribute('class', j % 5 === 0 ? 'bezier-grid-major' : 'bezier-grid');
+            var y = j * 0.1;
+            var line = createSVGElement('line', {
+                'x1': '0',
+                'y1': y.toString(),
+                'x2': '1',
+                'y2': y.toString(),
+                'class': j % 5 === 0 ? 'bezier-grid-major' : 'bezier-grid'
+            });
             gridGroup.appendChild(line);
         }
 
@@ -135,11 +161,13 @@ var CubicBezierEditor = (function () {
      * Create a draggable handle
      */
     CubicBezierEditor.prototype.createHandle = function (x, y, id) {
-        var handle = document.createElement('div');
-        handle.className = 'bezier-handle';
-        handle.id = 'handle-' + id;
-        handle.setAttribute('data-id', id);
-        this.container.appendChild(handle);
+        var handle = createSVGElement('circle', {
+            'class': 'bezier-handle',
+            'id': 'handle-' + id,
+            'data-id': id,
+            'r': '0.03' // radius relative to viewBox (0-1)
+        });
+        this.svg.appendChild(handle);
 
         // Position the handle
         this.positionHandle(handle, x, y);
@@ -151,25 +179,23 @@ var CubicBezierEditor = (function () {
      * Position a handle at the given coordinates
      */
     CubicBezierEditor.prototype.positionHandle = function (handle, x, y) {
-        // Convert to percentage for positioning
-        var xPos = x * 100;
-        var yPos = (1 - y) * 100; // Invert y-axis
-
-        handle.style.left = xPos + '%';
-        handle.style.top = yPos + '%';
+        // x and y are already in 0-1 range
+        // In SVG, y=0 is top, y=1 is bottom, so we invert
+        handle.setAttribute('cx', x);
+        handle.setAttribute('cy', 1 - y);
     };
 
     /**
      * Create the preview dot for animation
      */
     CubicBezierEditor.prototype.createPreviewDot = function () {
-        this.previewDot = document.createElement('div');
-        this.previewDot.className = 'bezier-preview';
-        this.container.appendChild(this.previewDot);
-
-        // Position initially outside view
-        this.previewDot.style.left = '-10px';
-        this.previewDot.style.top = '100%';
+        this.previewDot = createSVGElement('circle', {
+            'class': 'bezier-preview',
+            'r': '0.015',
+            'cx': '0',
+            'cy': '1'
+        });
+        this.svg.appendChild(this.previewDot);
     };
 
     /**
@@ -178,21 +204,21 @@ var CubicBezierEditor = (function () {
     CubicBezierEditor.prototype.updateCurve = function () {
         var [p1x, p1y, p2x, p2y] = this.values;
 
-        // Update control lines
-        // Line from start point (0,100) to P1
+        // Update control lines (remember to invert y for SVG coordinates)
+        // Line from start point (0,1) to P1
         this.controlLine1.setAttribute('x1', '0');
-        this.controlLine1.setAttribute('y1', '100');
-        this.controlLine1.setAttribute('x2', p1x * 100);
-        this.controlLine1.setAttribute('y2', (1 - p1y) * 100);
+        this.controlLine1.setAttribute('y1', '1');
+        this.controlLine1.setAttribute('x2', p1x);
+        this.controlLine1.setAttribute('y2', 1 - p1y);
 
-        // Line from end point (100,0) to P2
-        this.controlLine2.setAttribute('x1', '100');
+        // Line from end point (1,0) to P2
+        this.controlLine2.setAttribute('x1', '1');
         this.controlLine2.setAttribute('y1', '0');
-        this.controlLine2.setAttribute('x2', p2x * 100);
-        this.controlLine2.setAttribute('y2', (1 - p2y) * 100);
+        this.controlLine2.setAttribute('x2', p2x);
+        this.controlLine2.setAttribute('y2', 1 - p2y);
 
-        // Draw path - coordinates are now in viewBox units (0-100)
-        var pathStr = `M0,100 C${p1x * 100},${(1 - p1y) * 100} ${p2x * 100},${(1 - p2y) * 100} 100,0`;
+        // Draw path (viewBox coordinates 0-1, with y inverted)
+        var pathStr = `M0,1 C${p1x},${1 - p1y} ${p2x},${1 - p2y} 1,0`;
         this.path.setAttribute('d', pathStr);
 
         // Update preview animation
@@ -236,23 +262,9 @@ var CubicBezierEditor = (function () {
             }
 
             var pos = cubic(progress);
-
-            // Convert SVG coordinates to screen coordinates considering aspect ratio
-            var svgRect = self.svg.getBoundingClientRect();
-            var containerRect = self.container.getBoundingClientRect();
-
-            // Calculate the actual rendered position of the SVG content
-            var svgSize = Math.min(svgRect.width, svgRect.height);
-            var offsetX = (svgRect.width - svgSize) / 2;
-            var offsetY = (svgRect.height - svgSize) / 2;
-
-            // Position relative to container
-            var screenX = offsetX + (pos.x * svgSize);
-            var screenY = offsetY + ((1 - pos.y) * svgSize);
-
-            // Convert to percentage of container
-            self.previewDot.style.left = ((screenX / containerRect.width) * 100) + '%';
-            self.previewDot.style.top = ((screenY / containerRect.height) * 100) + '%';
+            // Position in viewBox coordinates (0-1, with y inverted)
+            self.previewDot.setAttribute('cx', pos.x);
+            self.previewDot.setAttribute('cy', 1 - pos.y);
         }
 
         this.animationFrame = requestAnimationFrame(animate);
@@ -265,7 +277,7 @@ var CubicBezierEditor = (function () {
         var self = this;
 
         // Mouse events for handles
-        this.container.addEventListener('mousedown', function (e) {
+        this.svg.addEventListener('mousedown', function (e) {
             // Check if clicking on a handle
             if (e.target.classList.contains('bezier-handle')) {
                 e.preventDefault();
@@ -286,19 +298,20 @@ var CubicBezierEditor = (function () {
         function onMouseMove(e) {
             if (!self.dragging || !self.activeHandle) return;
 
-            // Calculate relative position in container
-            var rect = self.container.getBoundingClientRect();
-            var x = (e.clientX - rect.left) / rect.width;
-            var y = 1 - (e.clientY - rect.top) / rect.height; // Invert Y-axis
+            // Get position in SVG coordinate space
+            var pt = self.svg.createSVGPoint();
+            pt.x = e.clientX;
+            pt.y = e.clientY;
 
-            // Constrain X values based on which handle is active
-            if (self.activeHandleIndex === 0) { // P1
-                x = Math.max(0, Math.min(1, x));
-            } else { // P2
-                x = Math.max(0, Math.min(1, x));
-            }
+            // Transform to SVG viewBox coordinates
+            var svgP = pt.matrixTransform(self.svg.getScreenCTM().inverse());
 
-            // Constrain Y values between 0 and 1
+            // svgP is now in viewBox coordinates (0-1)
+            var x = svgP.x;
+            var y = 1 - svgP.y; // Invert y to match our coordinate system
+
+            // Constrain values
+            x = Math.max(0, Math.min(1, x));
             y = Math.max(0, Math.min(1, y));
 
             // Update handle position visually
@@ -335,7 +348,7 @@ var CubicBezierEditor = (function () {
         }
 
         // Touch events for mobile support
-        this.container.addEventListener('touchstart', function (e) {
+        this.svg.addEventListener('touchstart', function (e) {
             // Check if touching a handle
             if (e.target.classList.contains('bezier-handle')) {
                 e.preventDefault();
@@ -360,19 +373,20 @@ var CubicBezierEditor = (function () {
             // Use the first touch point
             var touch = e.touches[0];
 
-            // Calculate relative position in container
-            var rect = self.container.getBoundingClientRect();
-            var x = (touch.clientX - rect.left) / rect.width;
-            var y = 1 - (touch.clientY - rect.top) / rect.height; // Invert Y-axis
+            // Get position in SVG coordinate space
+            var pt = self.svg.createSVGPoint();
+            pt.x = touch.clientX;
+            pt.y = touch.clientY;
 
-            // Constrain X values based on which handle is active
-            if (self.activeHandleIndex === 0) { // P1
-                x = Math.max(0, Math.min(1, x));
-            } else { // P2
-                x = Math.max(0, Math.min(1, x));
-            }
+            // Transform to SVG viewBox coordinates
+            var svgP = pt.matrixTransform(self.svg.getScreenCTM().inverse());
 
-            // Constrain Y values between 0 and 1
+            // svgP is now in viewBox coordinates (0-1)
+            var x = svgP.x;
+            var y = 1 - svgP.y; // Invert y to match our coordinate system
+
+            // Constrain values
+            x = Math.max(0, Math.min(1, x));
             y = Math.max(0, Math.min(1, y));
 
             // Update handle position visually
@@ -499,17 +513,7 @@ var CubicBezierEditor = (function () {
             cancelAnimationFrame(this.animationFrame);
         }
 
-        // Remove DOM elements
-        if (this.previewDot && this.previewDot.parentNode) {
-            this.previewDot.parentNode.removeChild(this.previewDot);
-        }
-
-        this.handles.forEach(function (handle) {
-            if (handle.parentNode) {
-                handle.parentNode.removeChild(handle);
-            }
-        });
-
+        // Remove SVG (which contains all child elements)
         if (this.svg && this.svg.parentNode) {
             this.svg.parentNode.removeChild(this.svg);
         }
