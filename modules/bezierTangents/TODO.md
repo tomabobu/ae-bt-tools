@@ -1,4 +1,6 @@
-# Update UI so Y values for handles can exceed 0 to 1 interval
+# Add drag delimiter to change the height of the interactive graph
+# Test with different animations and keys selection
+# Add alert if graph has overshoot and properties are not separated
 # Change main axis to be blue
 # Add buttons to save presets
 # Add option to delete preset

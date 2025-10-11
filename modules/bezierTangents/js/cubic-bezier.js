@@ -38,7 +38,7 @@ var CubicBezierEditor = (function () {
             showGrid: true,
             yMin: -0.5,  // Minimum Y value to display
             yMax: 1.5,   // Maximum Y value to display
-            padding: 0.1 // Padding as fraction of visible range
+            padding: 0 // Padding as fraction of visible range
         }, options || {});
 
         this.values = this.options.defaultValues.slice();
@@ -46,7 +46,9 @@ var CubicBezierEditor = (function () {
         this.activeHandle = null;
         this.animationFrame = null;
 
-        // Dynamic Y range based on handle positions
+        // Dynamic X and Y range based on handle positions
+        this.xMin = this.options.yMin;
+        this.xMax = this.options.yMax;
         this.yMin = this.options.yMin;
         this.yMax = this.options.yMax;
 
@@ -54,35 +56,45 @@ var CubicBezierEditor = (function () {
     }
 
     /**
-     * Calculate the appropriate Y range based on current handle positions
+     * Calculate the appropriate X and Y ranges based on current handle positions
      */
-    CubicBezierEditor.prototype.calculateYRange = function () {
+    CubicBezierEditor.prototype.calculateViewRange = function () {
+        var p1x = this.values[0];
         var p1y = this.values[1];
+        var p2x = this.values[2];
         var p2y = this.values[3];
+
+        // Find min and max X values including start (0) and end (1)
+        var minX = Math.min(0, 1, p1x, p2x);
+        var maxX = Math.max(0, 1, p1x, p2x);
 
         // Find min and max Y values including start (0) and end (1)
         var minY = Math.min(0, 1, p1y, p2y);
         var maxY = Math.max(0, 1, p1y, p2y);
 
         // Add padding
-        var range = maxY - minY;
-        var padding = Math.max(0, range * this.options.padding);
+        var rangeX = maxX - minX;
+        var rangeY = maxY - minY;
+        var paddingX = Math.max(0, rangeX * this.options.padding);
+        var paddingY = Math.max(0, rangeY * this.options.padding);
 
-        this.yMin = minY - padding;
-        this.yMax = maxY + padding;
+        this.xMin = minX - paddingX;
+        this.xMax = maxX + paddingX;
+        this.yMin = minY - paddingY;
+        this.yMax = maxY + paddingY;
 
         // Update viewBox
         this.updateViewBox();
     };
 
     /**
-     * Update the SVG viewBox based on current Y range
+     * Update the SVG viewBox based on current X and Y ranges
      */
     CubicBezierEditor.prototype.updateViewBox = function () {
+        var width = this.xMax - this.xMin;
         var height = this.yMax - this.yMin;
         // ViewBox: x, y, width, height
-        // X always 0-1, Y based on current range
-        this.svg.setAttribute('viewBox', '0 ' + (-this.yMax) + ' 1 ' + height);
+        this.svg.setAttribute('viewBox', this.xMin + ' ' + (-this.yMax) + ' ' + width + ' ' + height);
     };
 
     /**
@@ -98,8 +110,8 @@ var CubicBezierEditor = (function () {
         });
         this.container.appendChild(this.svg);
 
-        // Calculate initial Y range and set viewBox
-        this.calculateYRange();
+        // Calculate initial X and Y range and set viewBox
+        this.calculateViewRange();
 
         // Get container dimensions
         this.width = this.container.clientWidth;
@@ -172,74 +184,50 @@ var CubicBezierEditor = (function () {
             'class': 'bezier-grid-container'
         });
 
+        // Calculate grid bounds to cover entire viewBox
+        // var gridXMin = this.xMin;
+        var gridXMin = -2;
+        var gridXMax = 3;
+        var gridYMin = this.yMin;
+        var gridYMax = this.yMax;
+
         // Draw horizontal grid lines for Y axis
-        var yStep = 0.2; // Grid every 0.25 units
-        var yStart = Math.floor(this.yMin / yStep) * yStep;
-        var yEnd = Math.ceil(this.yMax / yStep) * yStep;
+        var yStep = 0.1; // Grid every 0.1 units
+        var yStart = Math.floor(gridYMin / yStep) * yStep;
+        var yEnd = Math.ceil(gridYMax / yStep) * yStep;
 
         for (var y = yStart; y <= yEnd; y += yStep) {
+            var isMajor = Math.abs(y % 0.5) < 0.01; // Major line every 0.5 units
+            var isAxis = Math.abs(y) < 0.01 || Math.abs(y - 1) < 0.01;
+
             var line = createSVGElement('line', {
-                'x1': '0',
+                'x1': gridXMin.toString(),
                 'y1': (-y).toString(),
-                'x2': '1',
+                'x2': gridXMax.toString(),
                 'y2': (-y).toString(),
-                'class': (Math.abs(y) < 0.01 || Math.abs(y - 1) < 0.01) ? 'bezier-grid-major' : 'bezier-grid'
+                'class': isAxis ? 'bezier-axis' : (isMajor ? 'bezier-grid-major' : 'bezier-grid')
             });
             this.gridGroup.appendChild(line);
         }
 
+        // Draw vertical grid lines for X axis
+        var xStep = 0.1; // Grid every 0.1 units
+        var xStart = Math.floor(gridXMin / xStep) * xStep;
+        var xEnd = Math.ceil(gridXMax / xStep) * xStep;
 
+        for (var x = xStart; x <= xEnd; x += xStep) {
+            var isMajor = Math.abs(x % 0.5) < 0.01 || Math.abs(Math.abs(x % 0.5) - 1) < 0.01; // Major line every 0.5 units
+            var isAxis = Math.abs(x % 1) < 0.01 || Math.abs(Math.abs(x % 1) - 1) < 0.01;
 
-        // Vertical grid lines (X axis always 0-1)
-        for (var i = 1; i < 10; i++) {
-            var x = i * 0.1;
             var line = createSVGElement('line', {
                 'x1': x.toString(),
-                'y1': (-this.yMax).toString(),
+                'y1': (-gridYMax).toString(),
                 'x2': x.toString(),
-                'y2': (-this.yMin).toString(),
-                'class': i % 5 === 0 ? 'bezier-grid-major' : 'bezier-grid'
+                'y2': (-gridYMin).toString(),
+                'class': isAxis ? 'bezier-axis' : (isMajor ? 'bezier-grid-major' : 'bezier-grid')
             });
             this.gridGroup.appendChild(line);
         }
-
-        // Major axes
-        var xAxis = createSVGElement('line', {
-            'x1': '0',
-            'y1': '0',
-            'x2': '1',
-            'y2': '0',
-            'class': 'bezier-axis'
-        });
-        this.gridGroup.appendChild(xAxis);
-
-        var yAxisStart = createSVGElement('line', {
-            'x1': '0',
-            'y1': (-this.yMax).toString(),
-            'x2': '0',
-            'y2': (-this.yMin).toString(),
-            'class': 'bezier-axis'
-        });
-        this.gridGroup.appendChild(yAxisStart);
-
-        var yAxisEnd = createSVGElement('line', {
-            'x1': '1',
-            'y1': (-this.yMax).toString(),
-            'x2': '1',
-            'y2': (-this.yMin).toString(),
-            'class': 'bezier-axis'
-        });
-        this.gridGroup.appendChild(yAxisEnd);
-
-        // Line at y=1
-        var yOne = createSVGElement('line', {
-            'x1': '0',
-            'y1': '-1',
-            'x2': '1',
-            'y2': '-1',
-            'class': 'bezier-axis'
-        });
-        this.gridGroup.appendChild(yOne);
 
         this.svg.insertBefore(this.gridGroup, this.svg.firstChild);
     };
@@ -252,7 +240,7 @@ var CubicBezierEditor = (function () {
             'class': 'bezier-handle',
             'id': 'handle-' + id,
             'data-id': id,
-            'r': '0.025'
+            'r': '0.03'
         });
         this.svg.appendChild(handle);
 
@@ -291,8 +279,8 @@ var CubicBezierEditor = (function () {
     CubicBezierEditor.prototype.updateCurve = function () {
         var [p1x, p1y, p2x, p2y] = this.values;
 
-        // Recalculate Y range if needed
-        this.calculateYRange();
+        // Recalculate X and Y range if needed
+        this.calculateViewRange();
 
         // Redraw grid with new range
         if (this.options.showGrid) {
@@ -393,10 +381,13 @@ var CubicBezierEditor = (function () {
             var x = svgP.x;
             var y = -svgP.y; // Convert from SVG y to our coordinate system
 
-            // Constrain X to 0-1
-            x = Math.max(0, Math.min(1, x));
+            // Apply snapping if Shift key is pressed
+            if (e.shiftKey) {
+                x = Math.round(x * 10) / 10;
+                y = Math.round(y * 10) / 10;
+            }
 
-            // Y is unconstrained (can be any value)
+            // X and Y are both unconstrained (can be any value)
 
             self.positionHandle(self.activeHandle, x, y);
 
@@ -456,7 +447,13 @@ var CubicBezierEditor = (function () {
             var x = svgP.x;
             var y = -svgP.y;
 
-            x = Math.max(0, Math.min(1, x));
+            // Apply snapping if Shift key is pressed (for touch with external keyboard)
+            if (e.shiftKey) {
+                x = Math.round(x * 10) / 10;
+                y = Math.round(y * 10) / 10;
+            }
+
+            // X and Y are both unconstrained
 
             self.positionHandle(self.activeHandle, x, y);
 
@@ -504,16 +501,12 @@ var CubicBezierEditor = (function () {
             return;
         }
 
-        this.values = values.map(function (val, index) {
+        this.values = values.map(function (val) {
             val = parseFloat(val);
             if (isNaN(val)) {
-                return index % 2 === 0 ? 0.5 : 0.5;
+                return 0.5;
             }
-            // Only constrain X values (even indices)
-            if (index % 2 === 0) {
-                return Math.max(0, Math.min(1, val));
-            }
-            // Y values (odd indices) are unconstrained
+            // All values (X and Y) are now unconstrained
             return val;
         });
 
@@ -551,7 +544,8 @@ var CubicBezierEditor = (function () {
             'snappy': [0.1, 1.5, 0.2, 1],
             'slow-start': [0.8, 0, 0.2, 1],
             'elastic': [0.5, -0.5, 0.5, 1.5],
-            'overshoot': [0.25, 1.4, 0.75, 0.8]
+            'overshoot': [0.25, 1.4, 0.75, 0.8],
+            'extreme': [-0.5, -0.5, 1.5, 1.5]
         };
 
         if (presets[preset]) {
@@ -624,7 +618,8 @@ var CubicBezierEditor = (function () {
             'bounce': 'Bounce',
             'snappy': 'Snappy',
             'elastic': 'Elastic',
-            'overshoot': 'Overshoot'
+            'overshoot': 'Overshoot',
+            'extreme': 'Extreme'
         };
 
         const self = this;
