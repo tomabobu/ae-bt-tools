@@ -4,9 +4,9 @@
  * Value: Display name for the tab
  */
 const ModuleConfig = {
+    "bezierTangents": "Animation Tangent",
     "colorSwatches": "Colors Library",
     "guideGenerator": "Guides",
-    "bezierTangents": "Animation Tangent",
 };
 
 /**

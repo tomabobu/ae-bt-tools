@@ -3,30 +3,27 @@
  * JSX implementation for After Effects
  */
 
-// Create the module object directly
-var bezierTangents = {};
-
 // Private variables
-bezierTangents._bezierValues = [0.40, 0.14, 0.30, 1.00]; // Default cubic-bezier style values
+this.bezierTangents._bezierValues = [0.40, 0.14, 0.30, 1.00]; // Default cubic-bezier style values
 
 /**
  * Convert AE influence/speed values to cubic-bezier.com style points
  */
-bezierTangents.influenceSpeedToCubicBezier = function(outInfluence, outSpeed, inInfluence, inSpeed, timeDiff, valueDiff) {
+this.bezierTangents.influenceSpeedToCubicBezier = function(outInfluence, outSpeed, inInfluence, inSpeed, timeDiff, valueDiff) {
     var p1x = outInfluence / 100.0;
     var p1y = (outSpeed * (outInfluence / 100.0) * timeDiff) / valueDiff;
     var p2x = 1.0 - (inInfluence / 100.0);
     var p2y = 1.0 - ((inSpeed * (inInfluence / 100.0) * timeDiff) / valueDiff);
-    return [this.roundTo(p1x, 3), this.roundTo(p1y, 3), this.roundTo(p2x, 3), this.roundTo(p2y, 3)];
+    return [bezierTangents.roundTo(p1x, 3), bezierTangents.roundTo(p1y, 3), bezierTangents.roundTo(p2x, 3), bezierTangents.roundTo(p2y, 3)];
 };
 
 /**
  * Convert cubic-bezier.com style points to AE influence/speed values
  */
-bezierTangents.cubicBezierToInfluenceSpeed = function(p1x, p1y, p2x, p2y, timeDiff, valueDiff) {
-    var outInfluence = this.clamp(p1x * 100.0, 0.1, 100.0);
+this.bezierTangents.cubicBezierToInfluenceSpeed = function(p1x, p1y, p2x, p2y, timeDiff, valueDiff) {
+    var outInfluence = bezierTangents.clamp(p1x * 100.0, 0.1, 100.0);
     var outSpeed = (p1y * valueDiff) / ((outInfluence / 100.0) * timeDiff);
-    var inInfluence = this.clamp((1.0 - p2x) * 100.0, 0.1, 100.0);
+    var inInfluence = bezierTangents.clamp((1.0 - p2x) * 100.0, 0.1, 100.0);
     var inSpeed = ((1.0 - p2y) * valueDiff) / ((inInfluence / 100.0) * timeDiff);
     return {
         "out": [outInfluence, outSpeed],
@@ -37,14 +34,14 @@ bezierTangents.cubicBezierToInfluenceSpeed = function(p1x, p1y, p2x, p2y, timeDi
 /**
  * Clamp a value between min and max
  */
-bezierTangents.clamp = function(v, min, max) {
+this.bezierTangents.clamp = function(v, min, max) {
     return Math.max(min, Math.min(max, v));
 };
 
 /**
  * Calculate the maximum value difference between dimensions
  */
-bezierTangents.calculateMaxValueDiff = function(val1, val2) {
+this.bezierTangents.calculateMaxValueDiff = function(val1, val2) {
     if (val1 instanceof Array && val2 instanceof Array) {
         var diffs = [];
         for (var i = 0; i < val1.length; i++) {
@@ -64,14 +61,15 @@ bezierTangents.calculateMaxValueDiff = function(val1, val2) {
 /**
  * Round a value to specified number of decimals
  */
-bezierTangents.roundTo = function(val, decimals) {
+this.bezierTangents.roundTo = function(val, decimals) {
     return Math.round(val * Math.pow(10, decimals)) / Math.pow(10, decimals);
 };
 
 /**
  * Get the first animatable property from a selection
  */
-bezierTangents.getFirstAnimatableProperty = function(selProps) {
+this.bezierTangents.getFirstAnimatableProperty = function(selProps) {
+    alert(selProps.length);
     for (var i = 0; i < selProps.length; i++) {
         var p = selProps[i];
         // We only want properties that can be animated
@@ -85,14 +83,16 @@ bezierTangents.getFirstAnimatableProperty = function(selProps) {
 /**
  * Get bezier values from the selected keyframes in After Effects
  */
-bezierTangents.getBezierValues = function() {
+this.bezierTangents.getBezierValues = function() {
     try {
+        alert("trece a");
         var comp = app.project.activeItem;
         if (!(comp && comp instanceof CompItem)) {
             return {
                 error: "Select a composition first."
             };
         }
+        alert("trece b");
 
         var selProps = comp.selectedProperties;
         if (selProps.length === 0) {
@@ -101,13 +101,14 @@ bezierTangents.getBezierValues = function() {
             };
         }
 
-        var prop = this.getFirstAnimatableProperty(selProps);
+        var prop = bezierTangents.getFirstAnimatableProperty(selProps);
         if (!prop) {
             return {
                 error: "No suitable animated property found with at least two keyframes."
             };
         }
 
+        alert("trece 2");
         var k1 = 1;
         var k2 = 2;
         var timeDiff = prop.keyTime(k2) - prop.keyTime(k1);
@@ -115,7 +116,7 @@ bezierTangents.getBezierValues = function() {
         var val1 = prop.valueAtTime(prop.keyTime(k1), false);
         var val2 = prop.valueAtTime(prop.keyTime(k2), false);
 
-        var valueDiff = this.calculateMaxValueDiff(val1, val2);
+        var valueDiff = bezierTangents.calculateMaxValueDiff(val1, val2);
         if (valueDiff === 0) {
             valueDiff = 1; // Prevent division by zero
         }
@@ -123,13 +124,13 @@ bezierTangents.getBezierValues = function() {
         var outEase = prop.keyOutTemporalEase(k1)[0];
         var inEase = prop.keyInTemporalEase(k2)[0];
 
-        this._bezierValues = this.influenceSpeedToCubicBezier(
+        bezierTangents._bezierValues = bezierTangents.influenceSpeedToCubicBezier(
             outEase.influence, outEase.speed,
             inEase.influence, inEase.speed,
             timeDiff, valueDiff
         );
 
-        return this._bezierValues;
+        return bezierTangents._bezierValues;
     } catch (e) {
         return {
             error: "Error getting bezier values: " + e.toString()
@@ -140,7 +141,7 @@ bezierTangents.getBezierValues = function() {
 /**
  * Set bezier values to the selected keyframes in After Effects
  */
-bezierTangents.setBezierValues = function(values) {
+this.bezierTangents.setBezierValues = function(values) {
     try {
         if (!values || values.length !== 4) {
             return {
@@ -149,7 +150,7 @@ bezierTangents.setBezierValues = function(values) {
         }
 
         // Use provided values or default to stored values
-        var bezValues = values || this._bezierValues;
+        var bezValues = values || bezierTangents._bezierValues;
 
         var comp = app.project.activeItem;
         if (!(comp && comp instanceof CompItem)) {
@@ -176,10 +177,10 @@ bezierTangents.setBezierValues = function(values) {
             var timeDiff = (prop.numKeys > 1) ? (prop.keyTime(2) - prop.keyTime(1)) : 1;
             var val1 = (prop.numKeys > 1) ? prop.valueAtTime(prop.keyTime(1), false) : prop.valueAtTime(0, false);
             var val2 = (prop.numKeys > 1) ? prop.valueAtTime(prop.keyTime(2), false) : prop.valueAtTime(1, false);
-            var valueDiff = this.calculateMaxValueDiff(val1, val2) || 1;
+            var valueDiff = bezierTangents.calculateMaxValueDiff(val1, val2) || 1;
 
             // Convert to AE influence/speed values
-            var infSpd = this.cubicBezierToInfluenceSpeed(
+            var infSpd = bezierTangents.cubicBezierToInfluenceSpeed(
                 bezValues[0], bezValues[1],
                 bezValues[2], bezValues[3],
                 timeDiff, valueDiff
@@ -222,17 +223,17 @@ bezierTangents.setBezierValues = function(values) {
 /**
  * Test function to verify the module is loaded correctly
  */
-bezierTangents.test = function() {
+this.bezierTangents.test = function() {
     return "Bezier Tangents module loaded successfully";
 };
 
 /**
  * Debug function to list available methods
  */
-bezierTangents.debug = function() {
+this.bezierTangents.debug = function() {
     var methods = [];
-    for (var prop in this) {
-        if (typeof this[prop] === "function") {
+    for (var prop in bezierTangents) {
+        if (typeof bezierTangents[prop] === "function") {
             methods.push(prop);
         }
     }
