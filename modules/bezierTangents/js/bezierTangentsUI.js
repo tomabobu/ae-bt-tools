@@ -159,8 +159,6 @@ var BezierTangentsUI = (function () {
         csInterface.evalScript('callModuleFunction("bezierTangents", "getBezierValues", [])', function (result) {
             getBtn.disabled = false;
             getBtn.textContent = 'Get from Keyframes';
-            console.log(result);
-
             try {
                 const response = JSON.parse(result);
 

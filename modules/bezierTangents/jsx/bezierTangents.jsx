@@ -69,7 +69,6 @@ this.bezierTangents.roundTo = function(val, decimals) {
  * Get the first animatable property from a selection
  */
 this.bezierTangents.getFirstAnimatableProperty = function(selProps) {
-    alert(selProps.length);
     for (var i = 0; i < selProps.length; i++) {
         var p = selProps[i];
         // We only want properties that can be animated
@@ -85,14 +84,12 @@ this.bezierTangents.getFirstAnimatableProperty = function(selProps) {
  */
 this.bezierTangents.getBezierValues = function() {
     try {
-        alert("trece a");
         var comp = app.project.activeItem;
         if (!(comp && comp instanceof CompItem)) {
             return {
                 error: "Select a composition first."
             };
         }
-        alert("trece b");
 
         var selProps = comp.selectedProperties;
         if (selProps.length === 0) {
@@ -108,7 +105,6 @@ this.bezierTangents.getBezierValues = function() {
             };
         }
 
-        alert("trece 2");
         var k1 = 1;
         var k2 = 2;
         var timeDiff = prop.keyTime(k2) - prop.keyTime(k1);

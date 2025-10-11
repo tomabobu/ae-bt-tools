@@ -56,20 +56,25 @@
     transition: stroke 0.2s;
 }
 
-.bezier-grid {
-    stroke: #444;
+.bezier-endpoint {
+    fill: rgba(255, 255, 255, 0.5);
+    stroke: #ffffff;
     stroke-width: 0.005;
 }
 
+.bezier-grid {
+    stroke: rgba(255, 255, 255, 0.1);
+    stroke-width: 0.003;
+}
+
 .bezier-grid-major {
-    stroke: #555;
-    stroke-width: 0.01;
+    stroke: rgba(255, 255, 255, 0.5);
+    stroke-width: 0.005;
 }
 
 .bezier-axis {
-    stroke: #666;
-    stroke-width: 0.01;
-    stroke-dasharray: 3, 3;
+    stroke: rgba(255, 255, 255, 0.5);
+    stroke-width: 0.008;
 }
 
 /* Animation preview */
@@ -325,29 +330,6 @@
 }
 
 
-
-/* SVG elements */
-.bezier-path {
-    stroke: white;
-    stroke-width: 0.02;
-    fill: none;
-}
-
-.bezier-grid {
-    stroke: #444;
-    stroke-width: 0.005;
-}
-
-.bezier-grid-major {
-    stroke: #555;
-    stroke-width: 0.01;
-}
-
-.bezier-axis {
-    stroke: #666;
-    stroke-width: 0.01;
-    stroke-dasharray: 3, 3;
-}
 
 /* Animation preview */
 .bezier-preview {
