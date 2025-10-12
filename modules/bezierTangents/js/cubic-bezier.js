@@ -38,7 +38,7 @@ var CubicBezierEditor = (function () {
             showGrid: true,
             yMin: -0.5,  // Minimum Y value to display
             yMax: 1.5,   // Maximum Y value to display
-            padding: 0 // Padding as fraction of visible range
+            padding: 0.1 // Padding as fraction of visible range
         }, options || {});
 
         this.values = this.options.defaultValues.slice();
@@ -387,7 +387,8 @@ var CubicBezierEditor = (function () {
                 y = Math.round(y * 10) / 10;
             }
 
-            // X and Y are both unconstrained (can be any value)
+            // Constrain x value 
+            x = Math.max(0, Math.min(1, x));
 
             self.positionHandle(self.activeHandle, x, y);
 
@@ -453,7 +454,8 @@ var CubicBezierEditor = (function () {
                 y = Math.round(y * 10) / 10;
             }
 
-            // X and Y are both unconstrained
+            // Constrain X to 0-1
+            x = Math.max(0, Math.min(1, x));
 
             self.positionHandle(self.activeHandle, x, y);
 
