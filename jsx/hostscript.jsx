@@ -172,3 +172,18 @@ function testConnection() {
         result: "JSX connection working. Extension path: " + (g_extensionPath || "Not set")
     };
 }
+
+/**
+ * Unload a module script from memory
+ */
+function unloadModuleScript(moduleName) {
+    if (loadedScripts[moduleName]) {
+        // Clear the module object
+        if (typeof this[moduleName] === 'object') {
+            delete this[moduleName];
+        }
+        delete loadedScripts[moduleName];
+        return true;
+    }
+    return false;
+}

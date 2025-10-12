@@ -6,7 +6,7 @@
 const ModuleConfig = {
     "bezierTangents": "Animation Tangent",
     "colorSwatches": "Colors Library",
-    "guideGenerator": "Guides",
+    "guideGenerator": "Guides"
 };
 
 /**
@@ -14,37 +14,29 @@ const ModuleConfig = {
  */
 const ModuleLoader = {
     loadedModules: {},
+    loadedScripts: {}, // Track loaded script elements
+    loadedStyles: {},  // Track loaded style elements
 
     /**
-     * Dynamically load all modules specified in the config
-     */
-    loadModules: function (csInterface) {
-        const modulePromises = [];
-
-        // Loop through each module in the config
-        Object.keys(ModuleConfig).forEach(moduleId => {
-            const promise = this.loadModule(moduleId, csInterface);
-            modulePromises.push(promise);
-        });
-
-        return Promise.all(modulePromises);
-    },
-
-    /**
-     * Load a single module
+     * Load a single module on-demand
      */
     loadModule: function (moduleId, csInterface) {
+        // If already loaded, just return resolved promise
+        if (this.loadedModules[moduleId]) {
+            return Promise.resolve(moduleId);
+        }
+
         return new Promise((resolve, reject) => {
-            // First, load the CSS for the module
+            // Load CSS
             this.loadModuleCSS(moduleId);
 
-            // Then load the main module script
+            // Load JS
             const script = document.createElement('script');
             script.src = `modules/${moduleId}/index.js`;
             script.onload = () => {
-                // Once loaded, initialize the module if it exports an init function
                 if (window[moduleId] && typeof window[moduleId].init === 'function') {
                     this.loadedModules[moduleId] = window[moduleId];
+                    this.loadedScripts[moduleId] = script;
                     window[moduleId].init(csInterface);
                     resolve(moduleId);
                 } else {
@@ -53,23 +45,58 @@ const ModuleLoader = {
                 }
             };
             script.onerror = () => {
-                console.error(`Failed to load module: ${moduleId}`);
                 reject(new Error(`Failed to load module: ${moduleId}`));
             };
-
             document.head.appendChild(script);
         });
+    },
+
+    /**
+     * Unload a module and clean up resources
+     */
+    unloadModule: function (moduleId) {
+        const module = this.loadedModules[moduleId];
+
+        // Call cleanup function if module has one
+        if (module && typeof module.cleanup === 'function') {
+            module.cleanup();
+        }
+
+        // Remove script element
+        if (this.loadedScripts[moduleId]) {
+            this.loadedScripts[moduleId].remove();
+            delete this.loadedScripts[moduleId];
+        }
+
+        // Remove style element
+        if (this.loadedStyles[moduleId]) {
+            this.loadedStyles[moduleId].remove();
+            delete this.loadedStyles[moduleId];
+        }
+
+        // Clear module from window
+        if (window[moduleId]) {
+            delete window[moduleId];
+        }
+
+        // Clear DOM content
+        const tabPane = document.getElementById(moduleId);
+        if (tabPane) {
+            tabPane.innerHTML = '';
+        }
+
+        delete this.loadedModules[moduleId];
     },
 
     /**
      * Load CSS files for a module
      */
     loadModuleCSS: function (moduleId) {
-        // Check if the module has a CSS directory
         const link = document.createElement('link');
         link.rel = 'stylesheet';
         link.href = `modules/${moduleId}/css/${moduleId}.css`;
         document.head.appendChild(link);
+        this.loadedStyles[moduleId] = link;
     },
 
     /**
@@ -79,3 +106,7 @@ const ModuleLoader = {
         return this.loadedModules[moduleId];
     }
 };
+
+// Verify the config loaded
+// console.log('ModuleConfig loaded:', ModuleConfig);
+// console.log('ModuleLoader loaded:', ModuleLoader);
