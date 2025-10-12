@@ -261,3 +261,58 @@ select:focus {
 .hidden {
     display: none !important;
 }
+
+/* Global Notification System Styles */
+.notification-container {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    width: 90%;
+    max-width: 400px;
+}
+
+.notification {
+    background-color: #333;
+    color: #e6e6e6;
+    padding: 8px 12px;
+    border-radius: 3px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    font-size: 12px;
+    text-align: center;
+    transition: opacity 0.3s, transform 0.3s;
+    border-left: 3px solid #2d8ceb;
+    transform: translateY(-10px);
+    opacity: 0;
+}
+
+.notification.show {
+    opacity: 1;
+    transform: translateY(0px);
+}
+
+.notification.fade-out {
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+/* Notification Types */
+.notification-info {
+    border-left: 3px solid #2d8ceb;
+}
+
+.notification-success {
+    border-left-color: #2deb5c;
+}
+
+.notification-warning {
+    border-left-color: #ebc02d;
+}
+
+.notification-error {
+    border-left-color: #eb2d2d;
+}

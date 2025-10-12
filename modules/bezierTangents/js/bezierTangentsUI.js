@@ -163,7 +163,8 @@ var BezierTangentsUI = (function () {
                 const response = JSON.parse(result);
 
                 if (response.error) {
-                    showNotification('Error: ' + response.error, 'error');
+                    NotificationSystem.error('Error: ' + response.error);
+
                     return;
                 }
 
@@ -171,12 +172,12 @@ var BezierTangentsUI = (function () {
                     bezierValues = response.result;
                     bezierEditor.setValues(bezierValues);
                     updateValueDisplay();
-                    showNotification('Bezier values retrieved from keyframes');
+                    NotificationSystem.success('Bezier values retrieved from keyframes');
                 } else {
-                    showNotification('No valid bezier values found', 'warning');
+                    NotificationSystem.warning('No valid bezier values found');
                 }
             } catch (e) {
-                showNotification('Error parsing response from After Effects', 'error');
+                NotificationSystem.error('Error parsing response from After Effects');
                 console.error('Error parsing response:', e, result);
             }
         });
@@ -198,12 +199,12 @@ var BezierTangentsUI = (function () {
                 const response = JSON.parse(result);
 
                 if (response.error) {
-                    showNotification('Error: ' + response.error, 'error');
+                    NotificationSystem.error('Error: ' + response.error, 'error');
                 } else {
-                    showNotification('Applied bezier values to keyframes');
+                    NotificationSystem.success('Applied bezier values to keyframes');
                 }
             } catch (e) {
-                showNotification('Error parsing response from After Effects', 'error');
+                NotificationSystem.error('Error parsing response from After Effects');
                 console.error('Error parsing response:', e, result);
             }
         });
@@ -218,7 +219,7 @@ var BezierTangentsUI = (function () {
 
         // Validate input
         if (values.length !== 4 || values.some(isNaN)) {
-            showNotification('Please enter 4 valid numbers separated by commas', 'warning');
+            NotificationSystem.warning('Please enter 4 valid numbers separated by commas');
             return;
         }
 
@@ -238,45 +239,6 @@ var BezierTangentsUI = (function () {
         const display = document.getElementById('bezier-values-display');
         const roundedValues = bezierValues.map(v => Math.round(v * 1000) / 1000);
         display.textContent = `Bezier Values: ${roundedValues.join(', ')}`;
-    }
-
-    /**
-     * Display a notification message
-     * @param {string} message - The message to display
-     * @param {string} type - The type of notification ('info', 'warning', 'error')
-     */
-    function showNotification(message, type = 'info') {
-        // Check if a notification container already exists
-        let notifContainer = document.querySelector('.bezier-notification-container');
-
-        if (!notifContainer) {
-            notifContainer = document.createElement('div');
-            notifContainer.className = 'bezier-notification-container';
-            document.getElementById('bezierTangents').appendChild(notifContainer);
-        }
-
-        // Create notification element
-        const notification = document.createElement('div');
-        notification.className = `bezier-notification ${type}`;
-        notification.textContent = message;
-
-        // Add to container
-        notifContainer.appendChild(notification);
-
-        // Remove after a delay
-        setTimeout(() => {
-            notification.classList.add('fade-out');
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-
-                // If no more notifications, remove container
-                if (notifContainer.children.length === 0) {
-                    notifContainer.parentNode.removeChild(notifContainer);
-                }
-            }, 300);
-        }, 3000);
     }
 
     // Public API

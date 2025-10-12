@@ -222,48 +222,6 @@
     position: relative;
 }
 
-/* Notification system */
-.bezier-notification-container {
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1000;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    width: 90%;
-    max-width: 400px;
-}
-
-.bezier-notification {
-    background-color: #333;
-    color: #e6e6e6;
-    padding: 8px 12px;
-    border-radius: 3px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    font-size: 12px;
-    text-align: center;
-    transition: opacity 0.3s, transform 0.3s;
-    border-left: 3px solid #2d8ceb;
-}
-
-.bezier-notification.error {
-    border-left-color: #eb2d2d;
-}
-
-.bezier-notification.success {
-    border-left-color: #2deb5c;
-}
-
-.bezier-notification.warning {
-    border-left-color: #ebc02d;
-}
-
-.bezier-notification.fade-out {
-    opacity: 0;
-    transform: translateY(-10px);
-}
 
 /* Section divider */
 .bezier-divider {

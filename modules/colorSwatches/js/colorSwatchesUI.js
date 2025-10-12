@@ -116,7 +116,7 @@ var ColorSwatchesUI = (function () {
         swatchArea.innerHTML = '';
 
         if (!library || !library.groups) {
-            showStatus('Error loading library', 'error');
+            NotificationSystem.error('Error loading library');
             return;
         }
 
@@ -181,7 +181,7 @@ var ColorSwatchesUI = (function () {
                 const hex = library.groups[groupIndex].swatches[swatchIndex].hex;
 
                 ColorSwatches.copyToClipboard(hex);
-                showStatus(`Copied ${hex} to clipboard`);
+                NotificationSystem.success(`Copied ${hex} to clipboard`);
             });
 
             // Context menu
@@ -300,10 +300,10 @@ var ColorSwatchesUI = (function () {
                             ColorSwatches.loadLibrary(function (lib) {
                                 library = lib;
                                 populateSwatches();
-                                showStatus('Library imported successfully', 'success');
+                                NotificationSystem.success('Library imported successfully');
                             });
                         } else {
-                            showStatus('Failed to import library', 'error');
+                            NotificationSystem.error('Failed to import library');
                         }
                     });
                 }
@@ -319,10 +319,10 @@ var ColorSwatchesUI = (function () {
                             ColorSwatches.loadLibrary(function (lib) {
                                 library = lib;
                                 populateSwatches();
-                                showStatus('Library added successfully', 'success');
+                                NotificationSystem.success('Library added successfully');
                             });
                         } else {
-                            showStatus('Failed to add library', 'error');
+                            NotificationSystem.error('Failed to add library');
                         }
                     });
                 }
@@ -334,9 +334,9 @@ var ColorSwatchesUI = (function () {
             var defaultName = 'swatchLibrary.json';
             csInterface.evalScript(`callModuleFunction("colorSwatches", "saveFileFromJSX", ['${defaultName}','${JSON.stringify(library)}'])`, function (success) {
                 if (JSON.parse(success).result === "success") {
-                    showStatus('Library exported successfully', 'success');
+                    NotificationSystem.success('Library exported successfully');
                 } else {
-                    showStatus('Failed to export library', 'error');
+                    NotificationSystem.error('Failed to export library');
                 }
             });
         });
@@ -350,10 +350,10 @@ var ColorSwatchesUI = (function () {
                         ColorSwatches.loadLibrary(function (lib) {
                             library = lib;
                             populateSwatches();
-                            showStatus('Library cleared', 'success');
+                            NotificationSystem.success('Library cleared');
                         });
                     } else {
-                        showStatus('Failed to clear library', 'error');
+                        NotificationSystem.error('Failed to clear library');
                     }
                 });
             }
@@ -430,7 +430,7 @@ var ColorSwatchesUI = (function () {
 
 
                             } else {
-                                showStatus('Invalid HEX format.', 'error');
+                                NotificationSystem.error('Invalid HEX format.');
                                 modal.style.display = 'none';
                             }
                         };
@@ -464,7 +464,7 @@ var ColorSwatchesUI = (function () {
 
                     case 'copy':
                         ColorSwatches.copyToClipboard(swatch.hex);
-                        showStatus(`Copied ${swatch.hex} to clipboard`);
+                        NotificationSystem.success(`Copied ${swatch.hex} to clipboard`);
                         break;
                 }
 
@@ -511,28 +511,6 @@ var ColorSwatchesUI = (function () {
         };
 
         input.click();
-    }
-
-
-
-    /**
-     * Show status message
-     */
-    function showStatus(message, type) {
-        const statusElement = document.getElementById('status-message');
-        statusElement.textContent = message;
-        statusElement.className = 'status-text ' + (type || 'info');
-
-        // Clear previous timeout
-        if (statusTimeout) {
-            clearTimeout(statusTimeout);
-        }
-
-        // Auto hide after 3 seconds
-        statusTimeout = setTimeout(function () {
-            statusElement.textContent = '';
-            statusElement.className = 'status-text';
-        }, 3000);
     }
 
     // Public API
