@@ -88,16 +88,6 @@ var ColorSwatchesUI = (function () {
                       
                     </div>
                 </div>
-                <div id="hexModal" class="modal" style="display:none;">
-                    <div class="modal-content">
-                        <h3>Edit Swatch HEX</h3>
-                        <input type="text" id="hexInput" placeholder="#FF0000">
-                        <div class="modal-actions">
-                        <button id="hexCancel">Cancel</button>
-                        <button id="hexOk">OK</button>
-                        </div>
-                    </div>
-                </div>
             `;
             populateSwatches();
             setupEventListeners();
@@ -344,19 +334,25 @@ var ColorSwatchesUI = (function () {
 
         // Clear button
         document.getElementById('btn-clear').addEventListener('click', function () {
-            if (confirm('Clear the library? This cannot be undone.')) {
-                ColorSwatches.clearLibrary(function (success) {
-                    if (success) {
-                        ColorSwatches.loadLibrary(function (lib) {
-                            library = lib;
-                            populateSwatches();
-                            NotificationSystem.success('Library cleared');
-                        });
-                    } else {
-                        NotificationSystem.error('Failed to clear library');
-                    }
-                });
-            }
+            ModalSystem.confirm('Clear the library? This cannot be undone.', {
+                title: 'Clear Library',
+                confirmText: 'Clear',
+                cancelText: 'Cancel'
+            }).then((confirmed) => {
+                if (confirmed) {
+                    ColorSwatches.clearLibrary(function (success) {
+                        if (success) {
+                            ColorSwatches.loadLibrary(function (lib) {
+                                library = lib;
+                                populateSwatches();
+                                NotificationSystem.success('Library cleared');
+                            });
+                        } else {
+                            NotificationSystem.error('Failed to clear library');
+                        }
+                    });
+                }
+            });
         });
 
         // Swatch size slider
@@ -411,34 +407,28 @@ var ColorSwatchesUI = (function () {
 
                 switch (action) {
                     case 'editHex':
-                        const modal = document.getElementById('hexModal');
-                        const input = document.getElementById('hexInput');
-                        modal.style.display = 'flex';
-                        input.value = swatch.hex || '#FFFFFF';
-
-                        // OK button
-                        document.getElementById('hexOk').onclick = () => {
-                            const newHex = input.value.trim();
-                            if (newHex && /^#([0-9A-F]{3}){1,2}$/i.test(newHex)) {
-                                ColorSwatches.updateSwatch(groupIndex, swatchIndex, { hex: newHex }, function () {
+                        ModalSystem.prompt('Enter HEX color value:', swatch.hex || '#FFFFFF', {
+                            title: 'Edit Swatch HEX',
+                            placeholder: '#FF0000',
+                            helperText: 'Format: #RGB or #RRGGBB',
+                            validator: (value) => {
+                                const trimmed = value.trim();
+                                if (!trimmed) return 'HEX value is required';
+                                if (!/^#([0-9A-F]{3}){1,2}$/i.test(trimmed)) {
+                                    return 'Invalid HEX format. Use #RGB or #RRGGBB';
+                                }
+                                return true;
+                            }
+                        }).then((newHex) => {
+                            if (newHex) {
+                                ColorSwatches.updateSwatch(groupIndex, swatchIndex, { hex: newHex.toUpperCase() }, function () {
                                     ColorSwatches.loadLibrary(function (lib) {
                                         library = lib;
                                         populateSwatches();
-                                        modal.style.display = 'none';
                                     });
                                 });
-
-
-                            } else {
-                                NotificationSystem.error('Invalid HEX format.');
-                                modal.style.display = 'none';
                             }
-                        };
-
-                        // Cancel button
-                        document.getElementById('hexCancel').onclick = () => {
-                            modal.style.display = 'none';
-                        };
+                        });
                         break;
                     case 'edit':
                         showColorPicker(swatch.hex, function (newHex) {
