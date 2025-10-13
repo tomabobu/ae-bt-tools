@@ -55,7 +55,7 @@ var GuideGeneratorUI = (function () {
         GuideGenerator.getSelectedBoundingBox(function (bbox) {
             console.log("Button pressed and bbox returned:", bbox);
             if (!bbox) {
-                alert('Select at least one layer before initializing.');
+                NotificationSystem.warning('Select at least one layer before initializing');
                 initButton.disabled = false;
                 initButton.textContent = 'Initialize';
                 return;
@@ -64,7 +64,7 @@ var GuideGeneratorUI = (function () {
             // Store existing guides
             GuideGenerator.storeExistingGuides(function (success) {
                 if (!success) {
-                    alert('Failed to store existing guides.');
+                    NotificationSystem.error('Failed to store existing guides');
                     initButton.disabled = false;
                     initButton.textContent = 'Initialize';
                     return;
@@ -72,6 +72,7 @@ var GuideGeneratorUI = (function () {
 
                 // Build the configuration UI
                 buildConfigUI(document.querySelector('.guide-generator-container'));
+                NotificationSystem.success('Guide generator initialized');
             });
         });
     }
@@ -90,20 +91,20 @@ var GuideGeneratorUI = (function () {
                         <div class="input-group">
                             <label for="bbox-width">Width:</label>
                             <div class="number-input-group">
-                                <input  id="bbox-width" value="${bbox.width.toFixed(1)}" step="1">
+                                <input type="number" id="bbox-width" value="${bbox.width.toFixed(1)}" step="1">
                                 <div class="spinner-buttons">
-                                    <button class="spinner-button" data-input="bbox-width" data-action="increment">+</button>
-                                    <button class="spinner-button" data-input="bbox-width" data-action="decrement">-</button>
+                                    <button class="spinner-button" data-input="bbox-width" data-action="increment">▲</button>
+                                    <button class="spinner-button" data-input="bbox-width" data-action="decrement">▼</button>
                                 </div>
                             </div>
                         </div>
                         <div class="input-group">
                             <label for="bbox-height">Height:</label>
                             <div class="number-input-group">
-                                <input id="bbox-height" value="${bbox.height.toFixed(1)}" step="1">
+                                <input type="number" id="bbox-height" value="${bbox.height.toFixed(1)}" step="1">
                                 <div class="spinner-buttons">
-                                    <button class="spinner-button" data-input="bbox-height" data-action="increment">+</button>
-                                    <button class="spinner-button" data-input="bbox-height" data-action="decrement">-</button>
+                                    <button class="spinner-button" data-input="bbox-height" data-action="increment">▲</button>
+                                    <button class="spinner-button" data-input="bbox-height" data-action="decrement">▼</button>
                                 </div>
                             </div>
                         </div>
@@ -116,20 +117,20 @@ var GuideGeneratorUI = (function () {
                         <div class="input-group">
                             <label for="guide-columns">Columns:</label>
                             <div class="number-input-group">
-                                <input  id="guide-columns" value="${currentConfig.cols}" min="1" step="1">
+                                <input type="number" id="guide-columns" value="${currentConfig.cols}" min="1" step="1">
                                 <div class="spinner-buttons">
-                                    <button class="spinner-button" data-input="guide-columns" data-action="increment">+</button>
-                                    <button class="spinner-button" data-input="guide-columns" data-action="decrement">-</button>
+                                    <button class="spinner-button" data-input="guide-columns" data-action="increment">▲</button>
+                                    <button class="spinner-button" data-input="guide-columns" data-action="decrement">▼</button>
                                 </div>
                             </div>
                         </div>
                         <div class="input-group">
                             <label for="guide-rows">Rows:</label>
                             <div class="number-input-group">
-                                <input id="guide-rows" value="${currentConfig.rows}" min="1" step="1">
+                                <input type="number" id="guide-rows" value="${currentConfig.rows}" min="1" step="1">
                                 <div class="spinner-buttons">
-                                    <button class="spinner-button" data-input="guide-rows" data-action="increment">+</button>
-                                    <button class="spinner-button" data-input="guide-rows" data-action="decrement">-</button>
+                                    <button class="spinner-button" data-input="guide-rows" data-action="increment">▲</button>
+                                    <button class="spinner-button" data-input="guide-rows" data-action="decrement">▼</button>
                                 </div>
                             </div>
                         </div>
@@ -139,20 +140,20 @@ var GuideGeneratorUI = (function () {
                         <div class="input-group">
                             <label for="col-gutter">Column Gutter:</label>
                             <div class="number-input-group">
-                                <input  id="col-gutter" value="${currentConfig.colGutter}" min="0" step="1">
+                                <input type="number" id="col-gutter" value="${currentConfig.colGutter}" min="0" step="1">
                                 <div class="spinner-buttons">
-                                    <button class="spinner-button" data-input="col-gutter" data-action="increment">+</button>
-                                    <button class="spinner-button" data-input="col-gutter" data-action="decrement">-</button>
+                                    <button class="spinner-button" data-input="col-gutter" data-action="increment">▲</button>
+                                    <button class="spinner-button" data-input="col-gutter" data-action="decrement">▼</button>
                                 </div>
                             </div>
                         </div>
                         <div class="input-group">
                             <label for="row-gutter">Row Gutter:</label>
                             <div class="number-input-group">
-                                <input  id="row-gutter" value="${currentConfig.rowGutter}" min="0" step="1">
+                                <input type="number" id="row-gutter" value="${currentConfig.rowGutter}" min="0" step="1">
                                 <div class="spinner-buttons">
-                                    <button class="spinner-button" data-input="row-gutter" data-action="increment">+</button>
-                                    <button class="spinner-button" data-input="row-gutter" data-action="decrement">-</button>
+                                    <button class="spinner-button" data-input="row-gutter" data-action="increment">▲</button>
+                                    <button class="spinner-button" data-input="row-gutter" data-action="decrement">▼</button>
                                 </div>
                             </div>
                         </div>
@@ -164,7 +165,8 @@ var GuideGeneratorUI = (function () {
                     </div>
                     
                     <div id="cell-size-info" class="cell-size-info">
-                        Column Width: ${calculateColumnWidth().toFixed(2)}px </br>Row Height: ${calculateRowHeight().toFixed(2)}px
+                        Column Width: ${calculateColumnWidth().toFixed(2)}px<br>
+                        Row Height: ${calculateRowHeight().toFixed(2)}px
                     </div>
                 </div>
                 
@@ -296,9 +298,17 @@ var GuideGeneratorUI = (function () {
      * Handle reset button click
      */
     function handleReset() {
-
-        GuideGenerator.reset(function () {
-            buildInitialUI(document.getElementById('guideGenerator'));
+        ModalSystem.confirm('Reset guides to the original state?', {
+            title: 'Reset Guides',
+            confirmText: 'Reset',
+            cancelText: 'Cancel'
+        }).then((confirmed) => {
+            if (confirmed) {
+                GuideGenerator.reset(function () {
+                    buildInitialUI(document.getElementById('guideGenerator'));
+                    NotificationSystem.info('Guides reset');
+                });
+            }
         });
     }
 
@@ -308,8 +318,8 @@ var GuideGeneratorUI = (function () {
     function handleApply() {
         GuideGenerator.accept(function () {
             buildInitialUI(document.getElementById('guideGenerator'));
+            NotificationSystem.success('Guides applied successfully');
         });
-
     }
 
     /**
@@ -335,7 +345,7 @@ var GuideGeneratorUI = (function () {
         if (infoEl) {
             const colWidth = calculateColumnWidth();
             const rowHeight = calculateRowHeight();
-            infoEl.textContent = `Column Width: ${colWidth.toFixed(2)}px, Row Height: ${rowHeight.toFixed(2)}px`;
+            infoEl.innerHTML = `Column Width: ${colWidth.toFixed(2)}px<br>Row Height: ${rowHeight.toFixed(2)}px`;
         }
     }
 
@@ -365,8 +375,17 @@ var GuideGeneratorUI = (function () {
         return (bbox.height - totalGutter) / rows;
     }
 
+    /**
+     * Cleanup function
+     */
+    function cleanup() {
+        // Clear references
+        csInterface = null;
+    }
+
     // Public API
     return {
-        init: init
+        init: init,
+        cleanup: cleanup
     };
 })();

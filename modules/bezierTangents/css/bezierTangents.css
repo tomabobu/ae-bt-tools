@@ -353,8 +353,8 @@
 }
 
 .bezier-preset {
-    width: auto;
-    height: auto;
+    width: 40px;
+    height: 40px;
     border: 1px solid #3a3a3a;
     border-radius: 3px;
     display: flex;
@@ -363,6 +363,7 @@
     cursor: pointer;
     background-color: #333;
     transition: all 0.2s;
+    padding: 0px;
 }
 
 .bezier-preset:hover {

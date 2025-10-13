@@ -22,7 +22,6 @@ var ColorSwatches = (function () {
             if (result && result !== 'undefined') {
                 callback(result);
             } else {
-                // Fallback to system path
                 callback(csInterface.getSystemPath(SystemPath.EXTENSION));
             }
         });
@@ -33,11 +32,8 @@ var ColorSwatches = (function () {
      */
     function loadLibraryFromModule(callback) {
         getExtensionPath(function (extensionPath) {
-
-            // Construct the path to the module's JSON file
             var modulePath = extensionPath + '/modules/colorSwatches/assets/colorSwatches.json';
 
-            // Try to read the file using evalScript to access ExtendScript File API
             var readScript = `
                 (function() {
                     var file = new File("${modulePath.replace(/\\/g, '\\\\')}");
@@ -91,20 +87,7 @@ var ColorSwatches = (function () {
                 {
                     name: "Blue",
                     hex: "#0000FF"
-                }
-                ]
-            }, {
-                name: "Secondary Colors",
-                collapsed: false,
-                swatches: [{
-                    name: "Orange",
-                    hex: "#FFA500"
-                },
-                {
-                    name: "Purple",
-                    hex: "#800080"
-                }
-                ]
+                }]
             }]
         };
     }
@@ -114,12 +97,9 @@ var ColorSwatches = (function () {
      */
     function loadLibrary(callback) {
         if (library) {
-            // We already have it loaded, just return it
             if (callback) callback(library);
             return;
         }
-
-        // Need to load it
         loadLibraryFromModule(callback);
     }
 
@@ -131,16 +111,13 @@ var ColorSwatches = (function () {
             var modulePath = extensionPath + '/modules/colorSwatches/assets/colorSwatches.json';
             var dirPath = modulePath.substring(0, modulePath.lastIndexOf('/'));
 
-            // Create directory if needed and save file using ExtendScript
             var saveScript = `
                 (function() {
-                    // Create directory structure if it doesn't exist
                     var folder = new Folder("${dirPath.replace(/\\/g, '\\\\')}");
                     if (!folder.exists) {
                         folder.create();
                     }
                     
-                    // Save the file
                     var file = new File("${modulePath.replace(/\\/g, '\\\\')}");
                     var success = false;
                     
@@ -197,7 +174,25 @@ var ColorSwatches = (function () {
 
             if (imported && imported.groups && imported.groups.length > 0) {
                 if (replace) {
+                    // When replacing, preserve UI settings from current library
+                    const preservedSettings = {
+                        swatchSize: library ? library.swatchSize : undefined,
+                        hideCollapsedGroups: library ? library.hideCollapsedGroups : undefined,
+                        hideGroupNames: library ? library.hideGroupNames : undefined
+                    };
+
                     library = imported;
+
+                    // Apply preserved settings
+                    if (preservedSettings.swatchSize !== undefined) {
+                        library.swatchSize = preservedSettings.swatchSize;
+                    }
+                    if (preservedSettings.hideCollapsedGroups !== undefined) {
+                        library.hideCollapsedGroups = preservedSettings.hideCollapsedGroups;
+                    }
+                    if (preservedSettings.hideGroupNames !== undefined) {
+                        library.hideGroupNames = preservedSettings.hideGroupNames;
+                    }
                 } else {
                     // Merge groups into existing library
                     for (var i = 0; i < imported.groups.length; i++) {
@@ -224,6 +219,95 @@ var ColorSwatches = (function () {
     }
 
     /**
+     * Add a new group
+     */
+    function addGroup(groupName, callback) {
+        if (library) {
+            library.groups.push({
+                name: groupName,
+                collapsed: false,
+                swatches: []
+            });
+            saveLibraryToModule(callback);
+            return true;
+        }
+        if (callback) callback(false);
+        return false;
+    }
+
+    /**
+     * Rename a group
+     */
+    function renameGroup(groupIndex, newName, callback) {
+        if (library && library.groups && library.groups[groupIndex]) {
+            library.groups[groupIndex].name = newName;
+            saveLibraryToModule(callback);
+            return true;
+        }
+        if (callback) callback(false);
+        return false;
+    }
+
+    /**
+     * Delete a group
+     */
+    function deleteGroup(groupIndex, callback) {
+        if (library && library.groups && library.groups[groupIndex]) {
+            library.groups.splice(groupIndex, 1);
+            saveLibraryToModule(callback);
+            return true;
+        }
+        if (callback) callback(false);
+        return false;
+    }
+
+    /**
+     * Duplicate a group
+     */
+    function duplicateGroup(sourceIndex, targetIndex, callback) {
+        if (library && library.groups && library.groups[sourceIndex]) {
+            const duplicatedGroup = JSON.parse(JSON.stringify(library.groups[sourceIndex]));
+            duplicatedGroup.name = duplicatedGroup.name + ' Copy';
+            library.groups.splice(targetIndex, 0, duplicatedGroup);
+            saveLibraryToModule(callback);
+            return true;
+        }
+        if (callback) callback(false);
+        return false;
+    }
+
+    /**
+     * Move a group to a new position
+     */
+    function moveGroup(sourceIndex, targetIndex, callback) {
+        if (library && library.groups && library.groups[sourceIndex] && sourceIndex !== targetIndex) {
+            const group = library.groups.splice(sourceIndex, 1)[0];
+            const insertIndex = sourceIndex < targetIndex ? targetIndex - 1 : targetIndex;
+            library.groups.splice(insertIndex, 0, group);
+            saveLibraryToModule(callback);
+            return true;
+        }
+        if (callback) callback(false);
+        return false;
+    }
+
+    /**
+     * Add a swatch to a group
+     */
+    function addSwatchToGroup(groupIndex, hex, callback) {
+        if (library && library.groups && library.groups[groupIndex]) {
+            library.groups[groupIndex].swatches.push({
+                name: hex,
+                hex: hex
+            });
+            saveLibraryToModule(callback);
+            return true;
+        }
+        if (callback) callback(false);
+        return false;
+    }
+
+    /**
      * Update a swatch
      */
     function updateSwatch(groupIndex, swatchIndex, newData, callback) {
@@ -233,9 +317,7 @@ var ColorSwatches = (function () {
             library.groups[groupIndex].swatches &&
             library.groups[groupIndex].swatches[swatchIndex]) {
 
-            // Update swatch properties
             Object.assign(library.groups[groupIndex].swatches[swatchIndex], newData);
-
             saveLibraryToModule(callback);
             return true;
         }
@@ -264,13 +346,59 @@ var ColorSwatches = (function () {
     }
 
     /**
+     * Move a swatch within or between groups
+     */
+    function moveSwatch(sourceGroupIndex, sourceSwatchIndex, targetGroupIndex, targetSwatchIndex, callback) {
+        if (library &&
+            library.groups &&
+            library.groups[sourceGroupIndex] &&
+            library.groups[sourceGroupIndex].swatches &&
+            library.groups[sourceGroupIndex].swatches[sourceSwatchIndex] &&
+            library.groups[targetGroupIndex]) {
+
+            const swatch = library.groups[sourceGroupIndex].swatches.splice(sourceSwatchIndex, 1)[0];
+
+            // Adjust target index if moving within same group
+            let insertIndex = targetSwatchIndex;
+            if (sourceGroupIndex === targetGroupIndex && sourceSwatchIndex < targetSwatchIndex) {
+                insertIndex = targetSwatchIndex - 1;
+            }
+
+            library.groups[targetGroupIndex].swatches.splice(insertIndex, 0, swatch);
+            saveLibraryToModule(callback);
+            return true;
+        }
+
+        if (callback) callback(false);
+        return false;
+    }
+
+    /**
+     * Duplicate a swatch within or to another group
+     */
+    function duplicateSwatch(sourceGroupIndex, sourceSwatchIndex, targetGroupIndex, targetSwatchIndex, callback) {
+        if (library &&
+            library.groups &&
+            library.groups[sourceGroupIndex] &&
+            library.groups[sourceGroupIndex].swatches &&
+            library.groups[sourceGroupIndex].swatches[sourceSwatchIndex] &&
+            library.groups[targetGroupIndex]) {
+
+            const swatchCopy = JSON.parse(JSON.stringify(library.groups[sourceGroupIndex].swatches[sourceSwatchIndex]));
+            library.groups[targetGroupIndex].swatches.splice(targetSwatchIndex, 0, swatchCopy);
+            saveLibraryToModule(callback);
+            return true;
+        }
+
+        if (callback) callback(false);
+        return false;
+    }
+
+    /**
      * Toggle group collapse state
      */
     function toggleGroup(groupIndex, callback) {
-        if (library &&
-            library.groups &&
-            library.groups[groupIndex]) {
-
+        if (library && library.groups && library.groups[groupIndex]) {
             library.groups[groupIndex].collapsed = !library.groups[groupIndex].collapsed;
             saveLibraryToModule(callback);
             return true;
@@ -279,22 +407,19 @@ var ColorSwatches = (function () {
         if (callback) callback(false);
         return false;
     }
-    /**
-     * Update swatch size
-     */
-    function updateProp(newSize, propName, callback) {
 
+    /**
+     * Update a property in the library
+     */
+    function updateProp(newValue, propName, callback) {
         if (library) {
-            library[propName] = newSize;
+            library[propName] = newValue;
             saveLibraryToModule(callback);
             return true;
         }
         if (callback) callback(false);
         return false;
     }
-
-
-
 
     /**
      * Get the current library
@@ -313,9 +438,17 @@ var ColorSwatches = (function () {
         hexToRGBArray: hexToRGBArray,
         importLibrary: importLibrary,
         clearLibrary: clearLibrary,
+        addGroup: addGroup,
+        renameGroup: renameGroup,
+        deleteGroup: deleteGroup,
+        duplicateGroup: duplicateGroup,
+        moveGroup: moveGroup,
+        addSwatchToGroup: addSwatchToGroup,
         updateSwatch: updateSwatch,
         deleteSwatch: deleteSwatch,
+        moveSwatch: moveSwatch,
+        duplicateSwatch: duplicateSwatch,
         toggleGroup: toggleGroup,
-        updateProp: updateProp,
+        updateProp: updateProp
     };
 })();
