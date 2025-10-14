@@ -335,8 +335,16 @@ var BezierTangentsUI = (function () {
             return;
         }
 
-        // Apply valid values
-        bezierValues = values.map(val => Math.max(0, Math.min(1, val))); // Clamp between 0 and 1
+        // Apply valid values - only clamp X values (index 0 and 2) to 0-1, Y values can be outside this range
+        bezierValues = values.map((val, index) => {
+            if (index === 0 || index === 2) {
+                // X values must be between 0 and 1
+                return Math.max(0, Math.min(1, val));
+            }
+            // Y values can be any number
+            return val;
+        });
+
         bezierEditor.setValues(bezierValues);
         updateValueDisplay();
 

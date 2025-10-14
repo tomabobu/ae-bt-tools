@@ -162,76 +162,65 @@ this.bezierTangents.setBezierValues = function(values) {
             };
         }
 
-        // Apply to each selected property
-        for (var j = 0; j < selProps.length; j++) {
-            var prop = selProps[j];
-            if (!prop.isTimeVarying || prop.numKeys < 1) {
-                continue; // Skip properties without keyframes
-            }
+        // Begin undo group for proper undo handling
+        app.beginUndoGroup("Set Bezier Values");
 
-            // Calculate time and value differences
-            var timeDiff = (prop.numKeys > 1) ? (prop.keyTime(2) - prop.keyTime(1)) : 1;
-            var val1 = (prop.numKeys > 1) ? prop.valueAtTime(prop.keyTime(1), false) : prop.valueAtTime(0, false);
-            var val2 = (prop.numKeys > 1) ? prop.valueAtTime(prop.keyTime(2), false) : prop.valueAtTime(1, false);
-            var valueDiff = bezierTangents.calculateMaxValueDiff(val1, val2) || 1;
-
-            // Convert to AE influence/speed values
-            var infSpd = bezierTangents.cubicBezierToInfluenceSpeed(
-                bezValues[0], bezValues[1],
-                bezValues[2], bezValues[3],
-                timeDiff, valueDiff
-            );
-
-            // Apply to all keyframes
-            for (var i = 1; i <= prop.numKeys; i++) {
-                // Create ease objects with the calculated values
-                var easeIn = new KeyframeEase(infSpd["in"][1], infSpd["in"][0]);
-                var easeOut = new KeyframeEase(infSpd["out"][1], infSpd["out"][0]);
-
-                // Handle multi-dimensional properties
-                var dimensions = 1;
-                if (prop.value instanceof Array) {
-                    dimensions = prop.value.length;
+        try {
+            // Apply to each selected property
+            for (var j = 0; j < selProps.length; j++) {
+                var prop = selProps[j];
+                if (!prop.isTimeVarying || prop.numKeys < 1) {
+                    continue; // Skip properties without keyframes
                 }
 
-                var easeInArray = [];
-                var easeOutArray = [];
+                // Calculate time and value differences
+                var timeDiff = (prop.numKeys > 1) ? (prop.keyTime(2) - prop.keyTime(1)) : 1;
+                var val1 = (prop.numKeys > 1) ? prop.valueAtTime(prop.keyTime(1), false) : prop.valueAtTime(0, false);
+                var val2 = (prop.numKeys > 1) ? prop.valueAtTime(prop.keyTime(2), false) : prop.valueAtTime(1, false);
+                var valueDiff = bezierTangents.calculateMaxValueDiff(val1, val2) || 1;
 
-                // Create arrays of identical ease objects for each dimension
-                for (var d = 0; d < dimensions; d++) {
-                    easeInArray.push(easeIn);
-                    easeOutArray.push(easeOut);
+                // Convert to AE influence/speed values
+                var infSpd = bezierTangents.cubicBezierToInfluenceSpeed(
+                    bezValues[0], bezValues[1],
+                    bezValues[2], bezValues[3],
+                    timeDiff, valueDiff
+                );
+
+                // Apply to all keyframes
+                for (var i = 1; i <= prop.numKeys; i++) {
+                    // Create ease objects with the calculated values
+                    var easeIn = new KeyframeEase(infSpd["in"][1], infSpd["in"][0]);
+                    var easeOut = new KeyframeEase(infSpd["out"][1], infSpd["out"][0]);
+
+                    // Handle multi-dimensional properties
+                    var dimensions = 1;
+                    if (prop.value instanceof Array) {
+                        dimensions = prop.value.length;
+                    }
+
+                    var easeInArray = [];
+                    var easeOutArray = [];
+
+                    // Create arrays of identical ease objects for each dimension
+                    for (var d = 0; d < dimensions; d++) {
+                        easeInArray.push(easeIn);
+                        easeOutArray.push(easeOut);
+                    }
+
+                    // Apply the ease values
+                    prop.setTemporalEaseAtKey(i, easeInArray, easeOutArray);
                 }
-
-                // Apply the ease values
-                prop.setTemporalEaseAtKey(i, easeInArray, easeOutArray);
             }
+
+            app.endUndoGroup();
+            return true;
+        } catch (innerError) {
+            app.endUndoGroup();
+            throw innerError;
         }
-
-        return true;
     } catch (e) {
         return {
             error: "Error setting bezier values: " + e.toString()
         };
     }
-};
-
-/**
- * Test function to verify the module is loaded correctly
- */
-this.bezierTangents.test = function() {
-    return "Bezier Tangents module loaded successfully";
-};
-
-/**
- * Debug function to list available methods
- */
-this.bezierTangents.debug = function() {
-    var methods = [];
-    for (var prop in bezierTangents) {
-        if (typeof bezierTangents[prop] === "function") {
-            methods.push(prop);
-        }
-    }
-    return "Bezier Tangents module has methods: " + methods.join(", ");
 };
