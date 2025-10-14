@@ -532,3 +532,21 @@ select:focus {
     border-bottom: none;
     border-top: 4px solid rgba(0, 0, 0, 0.9);
 }
+
+
+/* ==================== DRAG TO ADJUST SYSTEM STYLES ==================== */
+
+/* Drag adjusting state */
+input[type="number"].drag-adjusting {
+    cursor: ew-resize !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    border-color: #2d8ceb !important;
+    background-color: #252525 !important;
+}
+
+/* Ensure body cursor changes during drag */
+body.drag-adjusting-active {
+    cursor: ew-resize !important;
+}

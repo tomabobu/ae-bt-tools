@@ -4,13 +4,7 @@
 var GuideGeneratorUI = (function () {
     // Private variables
     let csInterface;
-    let currentConfig = {
-        cols: 3,
-        rows: 3,
-        colGutter: 0,
-        rowGutter: 0,
-        includeBoundingGuides: false
-    };
+    let currentConfig = {};
 
     /**
      * Initialize the UI
@@ -26,9 +20,24 @@ var GuideGeneratorUI = (function () {
     }
 
     /**
+    * Resets the config default values
+    */
+    function resetConfig() {
+        currentConfig = {
+            cols: 3,
+            rows: 3,
+            colGutter: 0,
+            rowGutter: 0,
+            includeBoundingGuides: false
+        };
+
+    }
+
+    /**
      * Build the initial UI state
      */
     function buildInitialUI(container) {
+        resetConfig();
         container.innerHTML = `
             <div class="guide-generator-container">
                 <div class="guide-initial-state">
@@ -91,20 +100,20 @@ var GuideGeneratorUI = (function () {
                         <div class="input-group">
                             <label for="bbox-width">Width:</label>
                             <div class="number-input-group">
-                                <input type="number" id="bbox-width" value="${bbox.width.toFixed(1)}" step="1">
+                                <input type="number" id="bbox-width" value="${bbox.width.toFixed(1)}" step="1" increment-amount="5" tooltip-message="Click and drag to adjust" tooltip-delay="1000">
                                 <div class="spinner-buttons">
-                                    <button class="spinner-button" data-input="bbox-width" data-action="increment">▲</button>
-                                    <button class="spinner-button" data-input="bbox-width" data-action="decrement">▼</button>
+                                    <button class="spinner-button" data-input="bbox-width" data-action="increment" tooltip-message="Increase value. Use Shift to increase by 10" tooltip-delay="1000" >▲</button>
+                                    <button class="spinner-button" data-input="bbox-width" data-action="decrement" tooltip-message="Decrease value. Use Shift to decrease by 10" tooltip-delay="1000">▼</button>
                                 </div>
                             </div>
                         </div>
                         <div class="input-group">
                             <label for="bbox-height">Height:</label>
                             <div class="number-input-group">
-                                <input type="number" id="bbox-height" value="${bbox.height.toFixed(1)}" step="1">
+                                <input type="number" id="bbox-height" value="${bbox.height.toFixed(1)}" step="1" increment-amount="5" tooltip-message="Click and drag to adjust" tooltip-delay="1000">
                                 <div class="spinner-buttons">
-                                    <button class="spinner-button" data-input="bbox-height" data-action="increment">▲</button>
-                                    <button class="spinner-button" data-input="bbox-height" data-action="decrement">▼</button>
+                                    <button class="spinner-button" data-input="bbox-height" data-action="increment" data-action="increment" tooltip-message="Increase value. Use Shift to increase by 10" tooltip-delay="1000">▲</button>
+                                    <button class="spinner-button" data-input="bbox-height" data-action="decrement" tooltip-message="Decrease value. Use Shift to decrease by 10" tooltip-delay="1000">▼</button>
                                 </div>
                             </div>
                         </div>
@@ -117,17 +126,17 @@ var GuideGeneratorUI = (function () {
                         <div class="input-group">
                             <label for="guide-columns">Columns:</label>
                             <div class="number-input-group">
-                                <input type="number" id="guide-columns" value="${currentConfig.cols}" min="1" step="1">
+                                <input type="number" id="guide-columns" value="${currentConfig.cols}" min="1" step="1" increment-amount="1" tooltip-message="Click and drag to adjust" tooltip-delay="1000">
                                 <div class="spinner-buttons">
-                                    <button class="spinner-button" data-input="guide-columns" data-action="increment">▲</button>
-                                    <button class="spinner-button" data-input="guide-columns" data-action="decrement">▼</button>
+                                    <button class="spinner-button" data-input="guide-columns" data-action="increment" data-action="increment" tooltip-message="Increase value. Use Shift to increase by 10" tooltip-delay="1000">▲</button>
+                                    <button class="spinner-button" data-input="guide-columns" data-action="decrement" tooltip-message="Decrease value. Use Shift to decrease by 10" tooltip-delay="1000">▼</button>
                                 </div>
                             </div>
                         </div>
                         <div class="input-group">
                             <label for="guide-rows">Rows:</label>
                             <div class="number-input-group">
-                                <input type="number" id="guide-rows" value="${currentConfig.rows}" min="1" step="1">
+                                <input type="number" id="guide-rows" value="${currentConfig.rows}" min="1" step="1" increment-amount="1" tooltip-message="Click and drag to adjust" tooltip-delay="1000">
                                 <div class="spinner-buttons">
                                     <button class="spinner-button" data-input="guide-rows" data-action="increment">▲</button>
                                     <button class="spinner-button" data-input="guide-rows" data-action="decrement">▼</button>
@@ -140,20 +149,20 @@ var GuideGeneratorUI = (function () {
                         <div class="input-group">
                             <label for="col-gutter">Column Gutter:</label>
                             <div class="number-input-group">
-                                <input type="number" id="col-gutter" value="${currentConfig.colGutter}" min="0" step="1">
+                                <input type="number" id="col-gutter" value="${currentConfig.colGutter}" min="0" step="1" increment-amount="5" tooltip-message="Click and drag to adjust" tooltip-delay="1000">
                                 <div class="spinner-buttons">
-                                    <button class="spinner-button" data-input="col-gutter" data-action="increment">▲</button>
-                                    <button class="spinner-button" data-input="col-gutter" data-action="decrement">▼</button>
+                                    <button class="spinner-button" data-input="col-gutter" data-action="increment" data-action="increment" tooltip-message="Increase value. Use Shift to increase by 10" tooltip-delay="1000">▲</button>
+                                    <button class="spinner-button" data-input="col-gutter" data-action="decrement" tooltip-message="Decrease value. Use Shift to decrease by 10" tooltip-delay="1000">▼</button>
                                 </div>
                             </div>
                         </div>
                         <div class="input-group">
                             <label for="row-gutter">Row Gutter:</label>
                             <div class="number-input-group">
-                                <input type="number" id="row-gutter" value="${currentConfig.rowGutter}" min="0" step="1">
+                                <input type="number" id="row-gutter" value="${currentConfig.rowGutter}" min="0" step="1" increment-amount="5" tooltip-message="Click and drag to adjust" tooltip-delay="1000">
                                 <div class="spinner-buttons">
-                                    <button class="spinner-button" data-input="row-gutter" data-action="increment">▲</button>
-                                    <button class="spinner-button" data-input="row-gutter" data-action="decrement">▼</button>
+                                    <button class="spinner-button" data-input="row-gutter" data-action="increment" data-action="increment" tooltip-message="Increase value. Use Shift to increase by 10" tooltip-delay="1000">▲</button>
+                                    <button class="spinner-button" data-input="row-gutter" data-action="decrement" tooltip-message="Decrease value. Use Shift to decrease by 10" tooltip-delay="1000">▼</button>
                                 </div>
                             </div>
                         </div>

@@ -120,6 +120,20 @@
     text-align: center;
     font-family: inherit;
     transition: border-color 0.2s ease;
+    /* Remove default spinners */
+    -moz-appearance: textfield;
+    appearance: textfield;
+    /* Allow cursor but prevent selection during drag */
+    cursor: text;
+}
+
+
+
+
+.number-input-group input::-webkit-outer-spin-button,
+.number-input-group input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
 
 .number-input-group input:focus {
