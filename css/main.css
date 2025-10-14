@@ -476,3 +476,59 @@ select:focus {
 .modal-body.custom-content>* {
     padding: 20px 24px;
 }
+
+
+/* Global Tooltip System Styles */
+.global-tooltip {
+    position: fixed;
+    background-color: rgba(26, 26, 26, 0.95);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 10001;
+    transform: translateY(-4px);
+    max-width: 200px;
+    word-wrap: break-word;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.4;
+    --arrow-offset: 50%;
+}
+
+.global-tooltip.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.global-tooltip.tooltip-above {
+    transform: translateY(4px);
+}
+
+.global-tooltip.tooltip-above.show {
+    transform: translateY(0);
+}
+
+/* Small arrow for tooltip */
+.global-tooltip::before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: var(--arrow-offset);
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-bottom: 4px solid rgba(0, 0, 0, 0.9);
+}
+
+.global-tooltip.tooltip-above::before {
+    top: auto;
+    bottom: -4px;
+    border-bottom: none;
+    border-top: 4px solid rgba(0, 0, 0, 0.9);
+}

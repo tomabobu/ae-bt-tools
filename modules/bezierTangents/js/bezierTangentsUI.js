@@ -16,6 +16,9 @@ var BezierTangentsUI = (function () {
     let startHeight = 0;
     let minHeight = 50;
     let maxHeight = 600;
+    let buttonGet = 'Get';
+    let buttonSet = 'Set';
+    let buttonManual = 'Manual Input';
 
     /**
      * Initialize the module's UI
@@ -144,9 +147,9 @@ var BezierTangentsUI = (function () {
                     </div>
                     
                     <div class="button-row">
-                        <button id="btn-get-bezier">Get</button>
-                        <button id="btn-set-bezier">Set</button>
-                        <button id="btn-manual-bezier">Manual Input</button>
+                        <button id="btn-get-bezier" tooltip-message="Get the bezier values from selected keyframes" tooltip-delay="1000" >${buttonGet}</button>
+                        <button id="btn-set-bezier" tooltip-message="Set the tangents of selected keyframes" tooltip-delay="1000" >${buttonSet}</button>
+                        <button id="btn-manual-bezier" tooltip-message="Manual input the bezier values" tooltip-delay="1000">${buttonManual}</button>
                     </div>
                     
                     <div class="divider"></div>
@@ -210,6 +213,9 @@ var BezierTangentsUI = (function () {
             const presetBtn = document.createElement('button');
             presetBtn.className = 'bezier-preset';
             presetBtn.setAttribute('title', preset.name);
+            presetBtn.setAttribute('tooltip-message', preset.name);
+            presetBtn.setAttribute('tooltip-delay', '0');
+
 
             const curve = document.createElement('div');
             curve.className = 'bezier-preset-curve';
@@ -564,7 +570,11 @@ var BezierTangentsUI = (function () {
 
         resizeHandle = document.createElement('div');
         resizeHandle.className = 'bezier-resize-handle';
+        resizeHandle.setAttribute('tooltip-message', 'Drag to resize');
+        resizeHandle.setAttribute('tooltip-delay', '0');
         resizeHandle.innerHTML = '<div class="resize-handle-bar"></div>';
+
+
         canvasContainer.parentElement.insertBefore(resizeHandle, canvasContainer.nextSibling);
 
         resizeHandle.addEventListener('mousedown', startResize);
@@ -699,11 +709,8 @@ var BezierTangentsUI = (function () {
     function getBezierValues() {
         const btn = document.getElementById('btn-get-bezier');
         btn.disabled = true;
-        btn.textContent = 'Getting...';
-
         csInterface.evalScript('callModuleFunction("bezierTangents", "getBezierValues", [])', function (result) {
             btn.disabled = false;
-            btn.textContent = 'Get from Keyframes';
             try {
                 const response = JSON.parse(result);
                 if (response.error) {
@@ -728,11 +735,8 @@ var BezierTangentsUI = (function () {
     function setBezierValues() {
         const btn = document.getElementById('btn-set-bezier');
         btn.disabled = true;
-        btn.textContent = 'Applying...';
-
         csInterface.evalScript(`callModuleFunction("bezierTangents", "setBezierValues", ${JSON.stringify([bezierValues])})`, function (result) {
             btn.disabled = false;
-            btn.textContent = 'Apply to Keyframes';
             try {
                 const response = JSON.parse(result);
                 if (response.error) {

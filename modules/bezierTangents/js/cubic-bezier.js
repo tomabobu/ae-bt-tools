@@ -242,6 +242,8 @@ var CubicBezierEditor = (function () {
             'data-id': id,
             'r': '0.03'
         });
+        handle.setAttribute('tooltip-message', 'Hold Shift to snap to grid');
+        handle.setAttribute('tooltip-delay', '1000');
         this.svg.appendChild(handle);
 
         // Position the handle

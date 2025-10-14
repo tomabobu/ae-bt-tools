@@ -62,6 +62,7 @@
 
 .bezier-handle:hover {
     fill: #78a9ff;
+
 }
 
 /* SVG elements */
@@ -196,32 +197,7 @@
     background-color: rgba(120, 169, 255, 0.6);
 }
 
-.bezier-resize-handle::after {
-    content: 'Drag to resize';
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%) translateY(-4px);
-    background-color: rgba(0, 0, 0, 0.9);
-    color: white;
-    padding: 4px 8px;
-    border-radius: 3px;
-    font-size: 11px;
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s ease, transform 0.2s ease;
-    z-index: 1000;
-}
 
-.bezier-resize-handle:hover::after {
-    opacity: 1;
-    transform: translateX(-50%) translateY(-8px);
-}
-
-.bezier-resize-handle.active::after {
-    opacity: 0;
-}
 
 /* ==================== CONTROLS SECTION ==================== */
 
