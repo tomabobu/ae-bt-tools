@@ -144,15 +144,9 @@ var BezierTangentsUI = (function () {
                     </div>
                     
                     <div class="button-row">
-                        <button id="btn-get-bezier">Get from Keyframes</button>
-                        <button id="btn-set-bezier">Apply to Keyframes</button>
+                        <button id="btn-get-bezier">Get</button>
+                        <button id="btn-set-bezier">Set</button>
                         <button id="btn-manual-bezier">Manual Input</button>
-                    </div>
-                    
-                    <div id="bezier-manual-input" class="bezier-manual-input" style="display: none;">
-                        <input type="text" id="manual-bezier-input" value="${roundBezierValues(bezierValues)}" placeholder="e.g., 0.4, 0.14, 0.3, 1">
-                        <button id="btn-accept-manual">Accept</button>
-                        <button id="btn-cancel-manual" class="secondary">Cancel</button>
                     </div>
                     
                     <div class="divider"></div>
@@ -617,17 +611,7 @@ var BezierTangentsUI = (function () {
     function setupEventListeners() {
         document.getElementById('btn-get-bezier').addEventListener('click', getBezierValues);
         document.getElementById('btn-set-bezier').addEventListener('click', setBezierValues);
-        document.getElementById('btn-manual-bezier').addEventListener('click', () => {
-            document.getElementById('bezier-manual-input').style.display = 'flex';
-            document.getElementById('manual-bezier-input').value = roundBezierValues(bezierValues);
-        });
-        document.getElementById('btn-accept-manual').addEventListener('click', acceptManualInput);
-        document.getElementById('btn-cancel-manual').addEventListener('click', () => {
-            document.getElementById('bezier-manual-input').style.display = 'none';
-        });
-        document.getElementById('manual-bezier-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') acceptManualInput();
-        });
+        document.getElementById('btn-manual-bezier').addEventListener('click', showManualInputModal);
 
     }
 
@@ -762,28 +746,43 @@ var BezierTangentsUI = (function () {
         });
     }
 
-    function acceptManualInput() {
-        const input = document.getElementById('manual-bezier-input').value;
-        const values = input.split(',').map(val => parseFloat(val.trim()));
+    function showManualInputModal() {
+        ModalSystem.prompt('Enter bezier values (comma-separated):', roundBezierValues(bezierValues), {
+            title: 'Manual Input',
+            placeholder: 'e.g., 0.42, 0, 0.58, 1',
+            helperText: 'Format: x1, y1, x2, y2 (x values: 0-1, y values: any number)',
+            validator: (value) => {
+                if (!value || !value.trim()) return 'Values are required';
 
-        if (values.length !== 4 || values.some(isNaN)) {
-            NotificationSystem.warning('Please enter 4 valid numbers separated by commas');
-            return;
-        }
+                const values = value.split(',').map(val => parseFloat(val.trim()));
 
-        bezierValues = values.map((val, index) => {
-            if (index === 0 || index === 2) {
-                return Math.max(0, Math.min(1, val));
+                if (values.length !== 4) {
+                    return 'Please enter exactly 4 values';
+                }
+
+                if (values.some(isNaN)) {
+                    return 'All values must be valid numbers';
+                }
+
+                return true;
             }
-            return val;
+        }).then((input) => {
+            if (input) {
+                const values = input.split(',').map(val => parseFloat(val.trim()));
+
+                bezierValues = values.map((val, index) => {
+                    if (index === 0 || index === 2) {
+                        return Math.max(0, Math.min(1, val));
+                    }
+                    return val;
+                });
+
+                bezierEditor.setValues(bezierValues);
+                updateValueDisplay();
+                saveState();
+            }
         });
-
-        bezierEditor.setValues(bezierValues);
-        updateValueDisplay();
-        saveState();
-        document.getElementById('bezier-manual-input').style.display = 'none';
     }
-
     function updateValueDisplay() {
         const display = document.getElementById('bezier-values-display');
         display.textContent = `Values: ${roundBezierValues(bezierValues)}`;

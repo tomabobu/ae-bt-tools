@@ -365,8 +365,19 @@
 }
 
 .preset-tab.active {
+    background-color: #232323 !important;
+    color: #2d8ceb !important;
+    position: relative;
+}
+
+.preset-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
     background-color: #2d8ceb !important;
-    color: white !important;
 }
 
 .preset-tabs::-webkit-scrollbar {
