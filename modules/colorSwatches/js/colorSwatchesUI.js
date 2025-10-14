@@ -483,7 +483,7 @@ var ColorSwatchesUI = (function () {
             groupIndex: parseInt(this.dataset.groupIndex),
             element: this
         };
-        this.style.opacity = '0.4';
+        this.style.border = '1px dashed #2d8ceb';
         e.dataTransfer.effectAllowed = isShiftPressed ? 'copy' : 'move';
         e.dataTransfer.setData('text/html', this.innerHTML);
     }

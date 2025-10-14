@@ -21,15 +21,11 @@
 
 /* Swatch groups */
 .swatch-group {
-    margin-bottom: 3px;
+    margin-bottom: 2px;
     background-color: #2a2a2a;
     overflow: hidden;
     cursor: move;
     transition: opacity 0.2s ease;
-}
-
-.swatch-group:not(.dragging) {
-    opacity: 1;
 }
 
 .group-header {
@@ -72,7 +68,6 @@
     flex-wrap: wrap;
     padding: 0px;
     gap: 1px;
-    min-height: 20px;
 }
 
 .group-swatches.hidden {
@@ -98,8 +93,7 @@
 }
 
 .color-swatch.dragging-swatch {
-    opacity: 0.4;
-    border: 2px dashed #2d8ceb;
+    border: 2px dashed #ffffffba;
     box-sizing: border-box;
 }
 
