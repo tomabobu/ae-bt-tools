@@ -4,8 +4,9 @@
 var BezierTangentsUI = (function () {
     // Private variables
     let csInterface;
-    let bezierValues = [0.40, 0.14, 0.30, 1.00]; // Default cubic-bezier style values
+    let bezierValues = [0.40, 0.14, 0.30, 1.00];
     let bezierEditor;
+    let appState = null;
 
     // Resize handle variables
     let resizeHandle = null;
@@ -21,11 +22,106 @@ var BezierTangentsUI = (function () {
      */
     function init(cs) {
         csInterface = cs;
-
-        // Create module UI container
         const container = document.getElementById('bezierTangents');
 
-        buildUI(container);
+        // Load state first, then build UI
+        loadState(() => {
+            buildUI(container);
+        });
+    }
+
+    /**
+     * Load state from JSON file
+     */
+    function loadState(callback) {
+        if (!csInterface) {
+            appState = getDefaultState();
+            callback();
+            return;
+        }
+
+        csInterface.evalScript('callModuleFunction("bezierTangents", "loadState", [])', function (result) {
+            try {
+                const response = JSON.parse(result);
+                if (response.error || !response.result) {
+                    appState = getDefaultState();
+                } else {
+                    appState = response.result;
+                    // Ensure all required properties exist
+                    if (!appState.currentValues) appState.currentValues = getDefaultState().currentValues;
+                    if (!appState.presets) appState.presets = getDefaultState().presets;
+                    if (!appState.groups) appState.groups = getDefaultState().groups;
+                    if (!appState.activeGroup) appState.activeGroup = appState.groups[0];
+                    if (!appState.uiHeight) appState.uiHeight = 300;
+                }
+                bezierValues = [
+                    appState.currentValues.x1,
+                    appState.currentValues.y1,
+                    appState.currentValues.x2,
+                    appState.currentValues.y2
+                ];
+            } catch (e) {
+                console.error('Error loading state:', e);
+                appState = getDefaultState();
+            }
+            callback();
+        });
+    }
+
+    /**
+     * Save state to JSON file
+     */
+    function saveState(callback) {
+        if (!csInterface || !appState) {
+            if (callback) callback(false);
+            return;
+        }
+
+        // Update current values in state
+        appState.currentValues = {
+            x1: bezierValues[0],
+            y1: bezierValues[1],
+            x2: bezierValues[2],
+            y2: bezierValues[3]
+        };
+
+        // Update UI height
+        if (canvasContainer) {
+            appState.uiHeight = canvasContainer.offsetHeight;
+        }
+
+        const stateJson = JSON.stringify(appState);
+        csInterface.evalScript(`callModuleFunction("bezierTangents", "saveState", [${JSON.stringify(stateJson)}])`, function (result) {
+            try {
+                const response = JSON.parse(result);
+                if (callback) callback(!response.error);
+            } catch (e) {
+                console.error('Error saving state:', e);
+                if (callback) callback(false);
+            }
+        });
+    }
+
+    /**
+     * Get default state
+     */
+    function getDefaultState() {
+        return {
+            currentValues: { x1: 0.42, y1: 0, x2: 0.58, y2: 1 },
+            presets: [
+                { name: "Linear", group: "Ease", x1: 0, y1: 0, x2: 1, y2: 1 },
+                { name: "Ease", group: "Ease", x1: 0.25, y1: 0.1, x2: 0.25, y2: 1 },
+                { name: "Ease In", group: "Ease", x1: 0.42, y1: 0, x2: 1, y2: 1 },
+                { name: "Ease Out", group: "Ease", x1: 0, y1: 0, x2: 0.58, y2: 1 },
+                { name: "Ease In Out", group: "Ease", x1: 0.42, y1: 0, x2: 0.58, y2: 1 },
+                { name: "Spring Soft", group: "Spring", x1: 0.5, y1: -0.3, x2: 0.5, y2: 1.3 },
+                { name: "Spring Medium", group: "Spring", x1: 0.5, y1: -0.5, x2: 0.5, y2: 1.5 },
+                { name: "Bounce Out", group: "Spring", x1: 0.175, y1: 0.885, x2: 0.32, y2: 1.275 }
+            ],
+            groups: ["Ease", "Spring", "Custom"],
+            activeGroup: "Ease",
+            uiHeight: 300
+        };
     }
 
     /**
@@ -34,8 +130,7 @@ var BezierTangentsUI = (function () {
     function buildUI(container) {
         container.innerHTML = `
             <div class="bezier-editor-container">
-                <div id="bezier-canvas-container" class="bezier-canvas-container">
-                    <!-- Bezier editor will be injected here -->
+                <div id="bezier-canvas-container" class="bezier-canvas-container" style="height: ${appState.uiHeight}px">
                 </div>
                 
                 <div class="bezier-controls">
@@ -57,28 +152,393 @@ var BezierTangentsUI = (function () {
                     
                     <div class="divider"></div>
                     
-                    <h3>Presets</h3>
-                    <div id="bezier-presets" class="bezier-presets">
-                        <!-- Preset buttons will be added here -->
+                    <div class="preset-header">
+                        <h3>Presets</h3>
                     </div>
+                    
+                    <div id="preset-tabs" class="preset-tabs"></div>
+                    <div id="bezier-presets" class="bezier-presets"></div>
                 </div>
             </div>
         `;
 
-        // Get reference to canvas container
         canvasContainer = document.getElementById('bezier-canvas-container');
-
-        // Load saved height before initializing editor
-        loadSavedHeight();
-
-        // Initialize the cubic bezier editor
         initBezierEditor();
-
-        // Initialize resize handle
         initResizeHandle();
-
-        // Set up event listeners
         setupEventListeners();
+        renderPresetTabs();
+        renderPresets();
+    }
+
+    /**
+     * Render preset group tabs
+     */
+    function renderPresetTabs() {
+        const tabsContainer = document.getElementById('preset-tabs');
+        tabsContainer.innerHTML = '';
+
+        appState.groups.forEach(group => {
+            const tab = document.createElement('button');
+            tab.className = 'preset-tab' + (group === appState.activeGroup ? ' active' : '');
+            tab.textContent = group;
+            tab.addEventListener('click', () => {
+                appState.activeGroup = group;
+                saveState();
+                renderPresetTabs();
+                renderPresets();
+            });
+
+            // Right-click menu for tabs
+            tab.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                showGroupContextMenu(e.clientX, e.clientY, group);
+            });
+
+            tabsContainer.appendChild(tab);
+        });
+    }
+
+    /**
+     * Render presets for active group
+     */
+    function renderPresets() {
+        const presetContainer = document.getElementById('bezier-presets');
+        presetContainer.innerHTML = '';
+
+        const groupPresets = appState.presets.filter(p => p.group === appState.activeGroup);
+
+        groupPresets.forEach((preset, index) => {
+            const presetBtn = document.createElement('button');
+            presetBtn.className = 'bezier-preset';
+            presetBtn.setAttribute('title', preset.name);
+
+            const curve = document.createElement('div');
+            curve.className = 'bezier-preset-curve';
+
+            // Create SVG with proper viewBox to handle overshoot
+            const svg = createPresetSVG(preset);
+            curve.appendChild(svg);
+
+            const label = document.createElement('div');
+            label.className = 'bezier-preset-label';
+            label.textContent = preset.name;
+            label.setAttribute('title', preset.name);
+
+            presetBtn.appendChild(curve);
+            presetBtn.appendChild(label);
+            presetContainer.appendChild(presetBtn);
+
+            presetBtn.addEventListener('click', function () {
+                bezierValues = [preset.x1, preset.y1, preset.x2, preset.y2];
+                bezierEditor.setValues(bezierValues);
+                updateValueDisplay();
+                saveState();
+            });
+
+            // Right-click menu for presets
+            presetBtn.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                showPresetContextMenu(e.clientX, e.clientY, preset, index);
+            });
+
+        });
+        const addButton = document.createElement('button');
+        addButton.className = 'bezier-preset btn-save-preset';
+        addButton.id = 'btn-save-preset';
+        addButton.title = 'Save Current as Preset';
+        addButton.textContent = '+';
+        addButton.addEventListener('click', saveAsPreset);
+        presetContainer.appendChild(addButton);
+    }
+
+    /**
+     * Create SVG for preset visualization
+     */
+    function createPresetSVG(preset) {
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('width', '100%');
+        svg.setAttribute('height', '100%');
+
+        // Calculate proper viewBox to show full curve including overshoot
+        const minY = Math.min(0, 1, preset.y1, preset.y2);
+        const maxY = Math.max(0, 1, preset.y1, preset.y2);
+        const padding = (maxY - minY) * 0.1;
+        const viewBoxHeight = maxY - minY + padding * 2;
+        const viewBoxY = -(maxY + padding);
+
+        svg.setAttribute('viewBox', `0 ${viewBoxY} 1 ${viewBoxHeight}`);
+        svg.setAttribute('preserveAspectRatio', 'none');
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        const d = `M0,0 C${preset.x1},${-preset.y1} ${preset.x2},${-preset.y2} 1,-1`;
+        path.setAttribute('d', d);
+        path.setAttribute('stroke', '#ffffff');
+        path.setAttribute('fill', 'none');
+        path.setAttribute('stroke-width', '0.5');
+        path.setAttribute('vector-effect', 'non-scaling-stroke');
+
+        svg.appendChild(path);
+        return svg;
+    }
+
+    /**
+     * Show context menu for presets
+     */
+    function showPresetContextMenu(x, y, preset, presetIndex) {
+        removeContextMenu();
+
+        const menu = document.createElement('div');
+        menu.id = 'bezier-context-menu';
+        menu.className = 'context-menu';
+        menu.style.left = `${x}px`;
+        menu.style.top = `${y}px`;
+
+        menu.innerHTML = `
+            <div class="menu-item" data-action="rename">Rename</div>
+            <div class="menu-item" data-action="move">Move to Group</div>
+            <div class="menu-item" data-action="delete">Delete</div>
+        `;
+
+        document.body.appendChild(menu);
+
+        menu.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const action = item.dataset.action;
+                handlePresetAction(action, preset, presetIndex);
+                removeContextMenu();
+            });
+        });
+
+        // Close menu on outside click
+        setTimeout(() => {
+            document.addEventListener('click', removeContextMenu, { once: true });
+        }, 0);
+    }
+
+    /**
+     * Show context menu for groups
+     */
+    function showGroupContextMenu(x, y, group) {
+        removeContextMenu();
+
+        const menu = document.createElement('div');
+        menu.id = 'bezier-context-menu';
+        menu.className = 'context-menu';
+        menu.style.left = `${x}px`;
+        menu.style.top = `${y}px`;
+
+        const canDelete = appState.groups.length > 1;
+
+        menu.innerHTML = `
+            <div class="menu-item" data-action="rename">Rename Group</div>
+            <div class="menu-item" data-action="new">New Group</div>
+            ${canDelete ? '<div class="menu-item" data-action="delete">Delete Group</div>' : ''}
+        `;
+
+        document.body.appendChild(menu);
+
+        menu.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const action = item.dataset.action;
+                handleGroupAction(action, group);
+                removeContextMenu();
+            });
+        });
+
+        setTimeout(() => {
+            document.addEventListener('click', removeContextMenu, { once: true });
+        }, 0);
+    }
+
+    /**
+     * Handle preset actions
+     */
+    function handlePresetAction(action, preset, presetIndex) {
+        switch (action) {
+            case 'rename':
+                ModalSystem.prompt('Enter new preset name:', preset.name, {
+                    title: 'Rename Preset',
+                    validator: (value) => value && value.trim() ? true : 'Name cannot be empty'
+                }).then(newName => {
+                    if (newName) {
+                        const actualIndex = appState.presets.findIndex(p =>
+                            p.name === preset.name && p.group === preset.group &&
+                            p.x1 === preset.x1 && p.y1 === preset.y1
+                        );
+                        if (actualIndex >= 0) {
+                            appState.presets[actualIndex].name = newName.trim();
+                            saveState(() => renderPresets());
+                        }
+                    }
+                });
+                break;
+
+            case 'move':
+                showMoveToGroupDialog(preset);
+                break;
+
+            case 'delete':
+                ModalSystem.confirm(`Delete preset "${preset.name}"?`, {
+                    title: 'Delete Preset',
+                    confirmText: 'Delete'
+                }).then(confirmed => {
+                    if (confirmed) {
+                        const actualIndex = appState.presets.findIndex(p =>
+                            p.name === preset.name && p.group === preset.group &&
+                            p.x1 === preset.x1 && p.y1 === preset.y1
+                        );
+                        if (actualIndex >= 0) {
+                            appState.presets.splice(actualIndex, 1);
+                            saveState(() => renderPresets());
+                            NotificationSystem.success('Preset deleted');
+                        }
+                    }
+                });
+                break;
+        }
+    }
+
+    /**
+     * Handle group actions
+     */
+    function handleGroupAction(action, group) {
+        switch (action) {
+            case 'rename':
+                ModalSystem.prompt('Enter new group name:', group, {
+                    title: 'Rename Group',
+                    validator: (value) => {
+                        if (!value || !value.trim()) return 'Name cannot be empty';
+                        if (appState.groups.includes(value.trim()) && value.trim() !== group) {
+                            return 'Group already exists';
+                        }
+                        return true;
+                    }
+                }).then(newName => {
+                    if (newName) {
+                        const groupIndex = appState.groups.indexOf(group);
+                        if (groupIndex >= 0) {
+                            appState.groups[groupIndex] = newName.trim();
+                            appState.presets.forEach(p => {
+                                if (p.group === group) p.group = newName.trim();
+                            });
+                            if (appState.activeGroup === group) {
+                                appState.activeGroup = newName.trim();
+                            }
+                            saveState(() => {
+                                renderPresetTabs();
+                                renderPresets();
+                            });
+                        }
+                    }
+                });
+                break;
+
+            case 'new':
+                ModalSystem.prompt('Enter group name:', 'New Group', {
+                    title: 'New Group',
+                    validator: (value) => {
+                        if (!value || !value.trim()) return 'Name cannot be empty';
+                        if (appState.groups.includes(value.trim())) {
+                            return 'Group already exists';
+                        }
+                        return true;
+                    }
+                }).then(newName => {
+                    if (newName) {
+                        appState.groups.push(newName.trim());
+                        appState.activeGroup = newName.trim();
+                        saveState(() => {
+                            renderPresetTabs();
+                            renderPresets();
+                        });
+                        NotificationSystem.success('Group created');
+                    }
+                });
+                break;
+
+            case 'delete':
+                if (appState.groups.length <= 1) {
+                    NotificationSystem.warning('Cannot delete the last group');
+                    return;
+                }
+
+                const presetsInGroup = appState.presets.filter(p => p.group === group);
+                const message = presetsInGroup.length > 0
+                    ? `Delete group "${group}" and its ${presetsInGroup.length} preset(s)?`
+                    : `Delete group "${group}"?`;
+
+                ModalSystem.confirm(message, {
+                    title: 'Delete Group',
+                    confirmText: 'Delete'
+                }).then(confirmed => {
+                    if (confirmed) {
+                        appState.groups = appState.groups.filter(g => g !== group);
+                        appState.presets = appState.presets.filter(p => p.group !== group);
+                        if (appState.activeGroup === group) {
+                            appState.activeGroup = appState.groups[0];
+                        }
+                        saveState(() => {
+                            renderPresetTabs();
+                            renderPresets();
+                        });
+                        NotificationSystem.success('Group deleted');
+                    }
+                });
+                break;
+        }
+    }
+
+    /**
+     * Show dialog to move preset to another group
+     */
+    function showMoveToGroupDialog(preset) {
+        const otherGroups = appState.groups.filter(g => g !== preset.group);
+
+        if (otherGroups.length === 0) {
+            NotificationSystem.info('Create another group first');
+            return;
+        }
+
+        const options = otherGroups.map(g => `<option value="${g}">${g}</option>`).join('');
+
+        ModalSystem.show({
+            type: 'custom',
+            content: `
+                <div class="modal-header">
+                    <h3>Move "${preset.name}" to Group</h3>
+                </div>
+                <div class="modal-body">
+                    <select id="move-group-select" class="modal-input">
+                        ${options}
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button class="modal-btn modal-btn-secondary" data-action="cancel">Cancel</button>
+                    <button class="modal-btn modal-btn-primary" data-action="confirm">Move</button>
+                </div>
+            `,
+            onConfirm: () => {
+                const select = document.getElementById('move-group-select');
+                const newGroup = select.value;
+                const actualIndex = appState.presets.findIndex(p =>
+                    p.name === preset.name && p.group === preset.group &&
+                    p.x1 === preset.x1 && p.y1 === preset.y1
+                );
+                if (actualIndex >= 0) {
+                    appState.presets[actualIndex].group = newGroup;
+                    saveState(() => renderPresets());
+                    NotificationSystem.success(`Moved to ${newGroup}`);
+                }
+            }
+        });
+    }
+
+    /**
+     * Remove context menu
+     */
+    function removeContextMenu() {
+        const menu = document.getElementById('bezier-context-menu');
+        if (menu) menu.remove();
     }
 
     /**
@@ -92,92 +552,27 @@ var BezierTangentsUI = (function () {
             onChange: function (values) {
                 bezierValues = values;
                 updateValueDisplay();
+                saveState();
             }
-        });
-
-        // Add preset buttons to the presets container
-        const presetContainer = document.getElementById('bezier-presets');
-
-        // Common easing presets
-        const presets = [
-            { name: 'linear', values: [0, 0, 1, 1], label: 'Linear' },
-            { name: 'ease', values: [0.25, 0.1, 0.25, 1], label: 'Ease' },
-            { name: 'ease-in', values: [0.42, 0, 1, 1], label: 'Ease In' },
-            { name: 'ease-out', values: [0, 0, 0.58, 1], label: 'Ease Out' },
-            { name: 'ease-in-out', values: [0.42, 0, 0.58, 1], label: 'Ease InOut' },
-            { name: 'bounce', values: [0.175, 0.885, 0.32, 1.275], label: 'Bounce' },
-            { name: 'snappy', values: [0.1, 1.5, 0.2, 1], label: 'Snappy' },
-            { name: 'slow-start', values: [0.8, 0, 0.2, 1], label: 'Slow Start' }
-        ];
-
-        presets.forEach(preset => {
-            const presetBtn = document.createElement('button');
-            presetBtn.className = 'bezier-preset';
-            presetBtn.setAttribute('data-preset', preset.name);
-            presetBtn.setAttribute('title', preset.label);
-
-            // Create a small visualization of the curve
-            const curve = document.createElement('div');
-            curve.className = 'bezier-preset-curve';
-            curve.style.backgroundImage = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M0,24 C${preset.values[0] * 24},${24 - (preset.values[1] * 24)} ${preset.values[2] * 24},${24 - (preset.values[3] * 24)} 24,0' stroke='%23ffffff' fill='none' /%3E%3C/svg%3E")`;
-
-            presetBtn.appendChild(curve);
-            presetContainer.appendChild(presetBtn);
-
-            // Add click event
-            presetBtn.addEventListener('click', function () {
-                bezierValues = preset.values.slice();
-                bezierEditor.setValues(bezierValues);
-                updateValueDisplay();
-            });
         });
     }
 
     /**
-     * Initialize the resize handle
+     * Initialize resize handle
      */
     function initResizeHandle() {
-        if (!canvasContainer) {
-            console.error('Canvas container not found');
-            return;
-        }
+        if (!canvasContainer) return;
 
-        // Create resize handle
         resizeHandle = document.createElement('div');
         resizeHandle.className = 'bezier-resize-handle';
         resizeHandle.innerHTML = '<div class="resize-handle-bar"></div>';
-
-        // Insert handle after the canvas container
         canvasContainer.parentElement.insertBefore(resizeHandle, canvasContainer.nextSibling);
 
-        // Add event listeners
         resizeHandle.addEventListener('mousedown', startResize);
         document.addEventListener('mousemove', performResize);
         document.addEventListener('mouseup', stopResize);
     }
 
-    /**
-     * Load saved height from storage
-     */
-    function loadSavedHeight() {
-        if (!canvasContainer) return;
-
-        try {
-            const savedHeight = localStorage.getItem('bezierCurveHeight');
-            if (savedHeight) {
-                const height = parseInt(savedHeight, 10);
-                if (height >= minHeight && height <= maxHeight) {
-                    canvasContainer.style.height = height + 'px';
-                }
-            }
-        } catch (e) {
-            console.warn('Could not load saved curve height:', e);
-        }
-    }
-
-    /**
-     * Start resizing
-     */
     function startResize(e) {
         e.preventDefault();
         isResizing = true;
@@ -187,129 +582,167 @@ var BezierTangentsUI = (function () {
         document.body.style.cursor = 'ns-resize';
     }
 
-    /**
-     * Perform resize while dragging
-     */
     function performResize(e) {
         if (!isResizing) return;
-
         e.preventDefault();
+
         const deltaY = e.clientY - startY;
-        const newHeight = startHeight + deltaY;
+        const newHeight = Math.max(minHeight, Math.min(maxHeight, startHeight + deltaY));
+        canvasContainer.style.height = newHeight + 'px';
 
-        // Constrain to min/max height
-        const constrainedHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
-
-        canvasContainer.style.height = constrainedHeight + 'px';
-
-        // Trigger canvas redraw if the editor has a resize method
         if (bezierEditor && typeof bezierEditor.resize === 'function') {
             bezierEditor.resize();
         }
     }
 
-    /**
-     * Stop resizing
-     */
-    function stopResize(e) {
+    function stopResize() {
         if (!isResizing) return;
-
         isResizing = false;
         resizeHandle.classList.remove('active');
         document.body.style.cursor = 'default';
-
-        // Save the height to localStorage for persistence
-        const finalHeight = canvasContainer.offsetHeight;
-        try {
-            localStorage.setItem('bezierCurveHeight', finalHeight);
-        } catch (e) {
-            console.warn('Could not save curve height:', e);
-        }
+        saveState();
     }
 
     /**
-     * Set up event listeners for the UI controls
+     * Setup event listeners
      */
     function setupEventListeners() {
-        // Get button - fetches values from selected keyframes
         document.getElementById('btn-get-bezier').addEventListener('click', getBezierValues);
-
-        // Set button - applies values to selected keyframes
         document.getElementById('btn-set-bezier').addEventListener('click', setBezierValues);
-
-        // Manual input button - shows manual input field
-        document.getElementById('btn-manual-bezier').addEventListener('click', function () {
-            const manualInput = document.getElementById('bezier-manual-input');
+        document.getElementById('btn-manual-bezier').addEventListener('click', () => {
+            document.getElementById('bezier-manual-input').style.display = 'flex';
             document.getElementById('manual-bezier-input').value = bezierValues.join(', ');
-            manualInput.style.display = 'flex';
         });
-
-        // Accept manual input button
         document.getElementById('btn-accept-manual').addEventListener('click', acceptManualInput);
-
-        // Cancel manual input button
-        document.getElementById('btn-cancel-manual').addEventListener('click', function () {
+        document.getElementById('btn-cancel-manual').addEventListener('click', () => {
             document.getElementById('bezier-manual-input').style.display = 'none';
         });
-
-        // Enter key in manual input field
-        document.getElementById('manual-bezier-input').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                acceptManualInput();
-            }
+        document.getElementById('manual-bezier-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') acceptManualInput();
         });
+
     }
 
     /**
-     * Get bezier values from After Effects
+     * Save current values as preset
      */
+    function saveAsPreset() {
+        const currentGroup = appState.activeGroup;
+        const groupOptions = appState.groups.map(g =>
+            `<option value="${g}" ${g === currentGroup ? 'selected' : ''}>${g}</option>`
+        ).join('');
+
+        ModalSystem.show({
+            type: 'custom',
+            content: `
+                <div class="modal-header">
+                    <h3>Save Preset</h3>
+                </div>
+                <div class="modal-body">
+                    <label style="display: block; margin-bottom: 8px; color: #c0c0c0;">Preset Name</label>
+                    <input type="text" id="preset-name-input" class="modal-input" placeholder="My Preset" style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 8px; color: #c0c0c0;">Group</label>
+                    <select id="preset-group-select" class="modal-input">
+                        ${groupOptions}
+                        <option value="__new__">+ Create New Group</option>
+                    </select>
+                    <input type="text" id="new-group-input" class="modal-input" placeholder="New Group Name" style="margin-top: 8px; display: none;">
+                </div>
+                <div class="modal-footer">
+                    <button class="modal-btn modal-btn-secondary" data-action="cancel">Cancel</button>
+                    <button class="modal-btn modal-btn-primary" data-action="confirm">Save</button>
+                </div>
+            `,
+            onConfirm: () => {
+                const nameInput = document.getElementById('preset-name-input');
+                const groupSelect = document.getElementById('preset-group-select');
+                const newGroupInput = document.getElementById('new-group-input');
+
+                const name = nameInput.value.trim();
+                if (!name) {
+                    NotificationSystem.warning('Please enter a preset name');
+                    return;
+                }
+
+                let group = groupSelect.value;
+                if (group === '__new__') {
+                    group = newGroupInput.value.trim();
+                    if (!group) {
+                        NotificationSystem.warning('Please enter a group name');
+                        return;
+                    }
+                    if (!appState.groups.includes(group)) {
+                        appState.groups.push(group);
+                    }
+                }
+
+                appState.presets.push({
+                    name: name,
+                    group: group,
+                    x1: bezierValues[0],
+                    y1: bezierValues[1],
+                    x2: bezierValues[2],
+                    y2: bezierValues[3]
+                });
+
+                appState.activeGroup = group;
+                saveState(() => {
+                    renderPresetTabs();
+                    renderPresets();
+                    NotificationSystem.success('Preset saved');
+                });
+            }
+        });
+
+        // Handle group selection change
+        setTimeout(() => {
+            const groupSelect = document.getElementById('preset-group-select');
+            const newGroupInput = document.getElementById('new-group-input');
+            groupSelect.addEventListener('change', () => {
+                newGroupInput.style.display = groupSelect.value === '__new__' ? 'block' : 'none';
+            });
+        }, 0);
+    }
+
     function getBezierValues() {
-        const getBtn = document.getElementById('btn-get-bezier');
-        getBtn.disabled = true;
-        getBtn.textContent = 'Getting...';
+        const btn = document.getElementById('btn-get-bezier');
+        btn.disabled = true;
+        btn.textContent = 'Getting...';
 
         csInterface.evalScript('callModuleFunction("bezierTangents", "getBezierValues", [])', function (result) {
-            getBtn.disabled = false;
-            getBtn.textContent = 'Get from Keyframes';
+            btn.disabled = false;
+            btn.textContent = 'Get from Keyframes';
             try {
                 const response = JSON.parse(result);
-
                 if (response.error) {
                     NotificationSystem.error('Error: ' + response.error);
                     return;
                 }
-
                 if (response.result && Array.isArray(response.result) && response.result.length === 4) {
                     bezierValues = response.result;
                     bezierEditor.setValues(bezierValues);
                     updateValueDisplay();
+                    saveState();
                     NotificationSystem.success('Bezier values retrieved from keyframes');
-
                 } else {
                     NotificationSystem.warning('No valid bezier values found');
                 }
             } catch (e) {
                 NotificationSystem.error('Error parsing response from After Effects');
-                console.error('Error parsing response:', e, result);
             }
         });
     }
 
-    /**
-     * Set bezier values to After Effects keyframes
-     */
     function setBezierValues() {
-        const setBtn = document.getElementById('btn-set-bezier');
-        setBtn.disabled = true;
-        setBtn.textContent = 'Applying...';
+        const btn = document.getElementById('btn-set-bezier');
+        btn.disabled = true;
+        btn.textContent = 'Applying...';
 
         csInterface.evalScript(`callModuleFunction("bezierTangents", "setBezierValues", ${JSON.stringify([bezierValues])})`, function (result) {
-            setBtn.disabled = false;
-            setBtn.textContent = 'Apply to Keyframes';
-
+            btn.disabled = false;
+            btn.textContent = 'Apply to Keyframes';
             try {
                 const response = JSON.parse(result);
-
                 if (response.error) {
                     NotificationSystem.error('Error: ' + response.error);
                 } else {
@@ -317,66 +750,49 @@ var BezierTangentsUI = (function () {
                 }
             } catch (e) {
                 NotificationSystem.error('Error parsing response from After Effects');
-                console.error('Error parsing response:', e, result);
             }
         });
     }
 
-    /**
-     * Accept manual input for bezier values
-     */
     function acceptManualInput() {
         const input = document.getElementById('manual-bezier-input').value;
         const values = input.split(',').map(val => parseFloat(val.trim()));
 
-        // Validate input
         if (values.length !== 4 || values.some(isNaN)) {
             NotificationSystem.warning('Please enter 4 valid numbers separated by commas');
             return;
         }
 
-        // Apply valid values - only clamp X values (index 0 and 2) to 0-1, Y values can be outside this range
         bezierValues = values.map((val, index) => {
             if (index === 0 || index === 2) {
-                // X values must be between 0 and 1
                 return Math.max(0, Math.min(1, val));
             }
-            // Y values can be any number
             return val;
         });
 
         bezierEditor.setValues(bezierValues);
         updateValueDisplay();
-
-        // Hide manual input
+        saveState();
         document.getElementById('bezier-manual-input').style.display = 'none';
     }
 
-    /**
-     * Update the bezier values display
-     */
     function updateValueDisplay() {
         const display = document.getElementById('bezier-values-display');
         const roundedValues = bezierValues.map(v => Math.round(v * 1000) / 1000);
         display.textContent = `Bezier Values: ${roundedValues.join(', ')}`;
     }
 
-
-    /**
-     * Cleanup function - destroys resize handle and removes event listeners
-     */
     function destroy() {
         if (resizeHandle) {
             resizeHandle.removeEventListener('mousedown', startResize);
             resizeHandle.remove();
-            resizeHandle = null;
         }
         document.removeEventListener('mousemove', performResize);
         document.removeEventListener('mouseup', stopResize);
         document.body.style.cursor = 'default';
+        removeContextMenu();
     }
 
-    // Public API
     return {
         init: init,
         destroy: destroy

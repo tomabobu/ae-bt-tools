@@ -1,9 +1,8 @@
 /**
  * Bezier Tangents Module CSS
- * Styling for the bezier tangent editor and controls
  */
 
-/* Main container for bezier editor */
+/* Main container */
 .bezier-editor-container {
     display: flex;
     flex-direction: column;
@@ -129,7 +128,6 @@
             rgba(120, 169, 255, 0.15) 100%);
 }
 
-/* The visual bar/grip indicator */
 .resize-handle-bar {
     width: 30px;
     height: 2px;
@@ -177,7 +175,6 @@
     background-color: rgba(120, 169, 255, 0.6);
 }
 
-/* Tooltip on hover */
 .bezier-resize-handle::after {
     content: 'Drag to resize';
     position: absolute;
@@ -207,7 +204,6 @@
 
 /* ==================== CONTROLS SECTION ==================== */
 
-/* Values display and controls */
 .bezier-controls {
     background-color: #2a2a2a;
     border-radius: 3px;
@@ -306,64 +302,195 @@
 
 /* ==================== PRESETS SECTION ==================== */
 
+.preset-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.preset-header h3 {
+    font-size: 14px;
+    font-weight: 500;
+    margin: 0;
+    color: #e6e6e6;
+}
+
+/* Preset tabs */
+.preset-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 12px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+
+.preset-tab {
+    background-color: #333 !important;
+    color: #c0c0c0 !important;
+    border: none;
+    border-radius: 3px;
+    padding: 6px 12px !important;
+    cursor: pointer;
+    font-size: 12px;
+    white-space: nowrap;
+    transition: all 0.2s;
+    min-width: auto !important;
+}
+
+.preset-tab:hover {
+    background-color: #444 !important;
+    color: #e6e6e6 !important;
+}
+
+.preset-tab.active {
+    background-color: #2d8ceb !important;
+    color: white !important;
+}
+
+.preset-tabs::-webkit-scrollbar {
+    height: 4px;
+}
+
+.preset-tabs::-webkit-scrollbar-track {
+    background: #2a2a2a;
+    border-radius: 2px;
+}
+
+.preset-tabs::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 2px;
+}
+
+.preset-tabs::-webkit-scrollbar-thumb:hover {
+    background: #666;
+}
+
+/* Preset buttons container */
 .bezier-presets-container {
     background-color: #2a2a2a;
     border-radius: 3px;
     padding: 15px;
 }
 
-.bezier-presets-title {
-    font-size: 14px;
-    font-weight: 500;
-    margin: 0 0 12px 0;
-    color: #e6e6e6;
-}
-
-.bezier-controls h3 {
-    font-size: 14px;
-    font-weight: 500;
-    margin: 0 0 12px 0;
-    color: #e6e6e6;
-}
-
 .bezier-presets {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 4px;
 }
 
+/* Individual preset buttons */
 .bezier-preset {
-    width: 40px;
-    height: 40px;
+    width: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
     border: 1px solid #444;
-    border-radius: 3px;
-    background-color: #333;
+    border-radius: 4px;
+    background-color: #333 !important;
     cursor: pointer;
     transition: all 0.2s;
-    overflow: hidden;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 0;
+    padding: 4px 8px !important;
+    min-width: auto !important;
 }
 
 .bezier-preset:hover {
     border-color: #2d8ceb;
-    background-color: #3d3d3d;
+    background-color: #3d3d3d !important;
     transform: translateY(-2px);
 }
 
 .bezier-preset:active {
-    transform: scale(0.95);
+    transform: scale(0.95) translateY(0);
 }
 
 .bezier-preset-curve {
-    width: 28px;
-    height: 28px;
+    width: 100%;
+    height: 40px;
     position: relative;
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: contain;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bezier-preset-curve svg {
+    display: block;
+}
+
+.bezier-preset-label {
+    font-size: 10px;
+    color: #c0c0c0;
+    text-align: center;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.2;
+}
+
+.bezier-preset:hover .bezier-preset-label {
+    color: #e6e6e6;
+}
+
+.btn-save-preset {
+    background-color: #424242 !important;
+    color: white !important;
+    border: none;
+    border-radius: 3px;
+    padding: 0;
+    cursor: pointer;
+    line-height: 1;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px !important;
+    min-height: 60px;
+}
+
+.btn-save-preset:hover {
+    background-color: #1a7ad9 !important;
+}
+
+.btn-save-preset:active {
+    background-color: #1569c2 !important;
+}
+
+/* ==================== CONTEXT MENU ==================== */
+
+#bezier-context-menu {
+    position: fixed;
+    background-color: #2b2b2b;
+    border: 1px solid #3a3a3a;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+    min-width: 140px;
+    padding: 4px 0;
+}
+
+#bezier-context-menu .menu-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    color: #e0e0e0;
+    transition: background-color 0.15s;
+}
+
+#bezier-context-menu .menu-item:hover {
+    background-color: #2d8ceb;
+    color: white;
+}
+
+#bezier-context-menu .menu-item:first-child {
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+}
+
+#bezier-context-menu .menu-item:last-child {
+    border-bottom-left-radius: 3px;
+    border-bottom-right-radius: 3px;
 }
 
 /* ==================== DIVIDERS ==================== */
@@ -404,7 +531,6 @@
         transform: rotate(360deg);
     }
 }
-
 
 /* ==================== RESPONSIVE ADJUSTMENTS ==================== */
 

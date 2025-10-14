@@ -4,7 +4,7 @@
  */
 
 // Private variables
-this.bezierTangents._bezierValues = [0.40, 0.14, 0.30, 1.00]; // Default cubic-bezier style values
+this.bezierTangents._bezierValues = [0.40, 0.14, 0.30, 1.00];
 
 /**
  * Convert AE influence/speed values to cubic-bezier.com style points
@@ -49,7 +49,7 @@ this.bezierTangents.calculateMaxValueDiff = function(val1, val2) {
         }
 
         diffs.sort(function(a, b) {
-            return b - a; // Sort descending to get max diff first
+            return b - a;
         });
 
         return diffs[0];
@@ -71,7 +71,6 @@ this.bezierTangents.roundTo = function(val, decimals) {
 this.bezierTangents.getFirstAnimatableProperty = function(selProps) {
     for (var i = 0; i < selProps.length; i++) {
         var p = selProps[i];
-        // We only want properties that can be animated
         if (p.propertyType === PropertyType.PROPERTY && p.isTimeVarying && p.numKeys >= 2) {
             return p;
         }
@@ -114,7 +113,7 @@ this.bezierTangents.getBezierValues = function() {
 
         var valueDiff = bezierTangents.calculateMaxValueDiff(val1, val2);
         if (valueDiff === 0) {
-            valueDiff = 1; // Prevent division by zero
+            valueDiff = 1;
         }
 
         var outEase = prop.keyOutTemporalEase(k1)[0];
@@ -145,7 +144,6 @@ this.bezierTangents.setBezierValues = function(values) {
             };
         }
 
-        // Use provided values or default to stored values
         var bezValues = values || bezierTangents._bezierValues;
 
         var comp = app.project.activeItem;
@@ -162,37 +160,30 @@ this.bezierTangents.setBezierValues = function(values) {
             };
         }
 
-        // Begin undo group for proper undo handling
         app.beginUndoGroup("Set Bezier Values");
 
         try {
-            // Apply to each selected property
             for (var j = 0; j < selProps.length; j++) {
                 var prop = selProps[j];
                 if (!prop.isTimeVarying || prop.numKeys < 1) {
-                    continue; // Skip properties without keyframes
+                    continue;
                 }
 
-                // Calculate time and value differences
                 var timeDiff = (prop.numKeys > 1) ? (prop.keyTime(2) - prop.keyTime(1)) : 1;
                 var val1 = (prop.numKeys > 1) ? prop.valueAtTime(prop.keyTime(1), false) : prop.valueAtTime(0, false);
                 var val2 = (prop.numKeys > 1) ? prop.valueAtTime(prop.keyTime(2), false) : prop.valueAtTime(1, false);
                 var valueDiff = bezierTangents.calculateMaxValueDiff(val1, val2) || 1;
 
-                // Convert to AE influence/speed values
                 var infSpd = bezierTangents.cubicBezierToInfluenceSpeed(
                     bezValues[0], bezValues[1],
                     bezValues[2], bezValues[3],
                     timeDiff, valueDiff
                 );
 
-                // Apply to all keyframes
                 for (var i = 1; i <= prop.numKeys; i++) {
-                    // Create ease objects with the calculated values
                     var easeIn = new KeyframeEase(infSpd["in"][1], infSpd["in"][0]);
                     var easeOut = new KeyframeEase(infSpd["out"][1], infSpd["out"][0]);
 
-                    // Handle multi-dimensional properties
                     var dimensions = 1;
                     if (prop.value instanceof Array) {
                         dimensions = prop.value.length;
@@ -201,13 +192,11 @@ this.bezierTangents.setBezierValues = function(values) {
                     var easeInArray = [];
                     var easeOutArray = [];
 
-                    // Create arrays of identical ease objects for each dimension
                     for (var d = 0; d < dimensions; d++) {
                         easeInArray.push(easeIn);
                         easeOutArray.push(easeOut);
                     }
 
-                    // Apply the ease values
                     prop.setTemporalEaseAtKey(i, easeInArray, easeOutArray);
                 }
             }
@@ -221,6 +210,65 @@ this.bezierTangents.setBezierValues = function(values) {
     } catch (e) {
         return {
             error: "Error setting bezier values: " + e.toString()
+        };
+    }
+};
+
+/**
+ * Load state from JSON file
+ */
+this.bezierTangents.loadState = function() {
+    try {
+        if (typeof g_extensionPath === 'undefined') {
+            return {
+                error: "Extension path not defined"
+            };
+        }
+
+        var filePath = g_extensionPath + "/modules/bezierTangents/assets/bezierTangents.json";
+        var file = new File(filePath);
+
+        if (!file.exists) {
+            return {
+                error: "State file not found"
+            };
+        }
+
+        file.open("r");
+        var content = file.read();
+        file.close();
+
+        var state = JSON.parse(content);
+        return state;
+    } catch (e) {
+        return {
+            error: "Error loading state: " + e.toString()
+        };
+    }
+};
+
+/**
+ * Save state to JSON file
+ */
+this.bezierTangents.saveState = function(stateJson) {
+    try {
+        if (typeof g_extensionPath === 'undefined') {
+            return {
+                error: "Extension path not defined"
+            };
+        }
+
+        var filePath = g_extensionPath + "/modules/bezierTangents/assets/bezierTangents.json";
+        var file = new File(filePath);
+
+        file.open("w");
+        file.write(stateJson);
+        file.close();
+
+        return true;
+    } catch (e) {
+        return {
+            error: "Error saving state: " + e.toString()
         };
     }
 };
