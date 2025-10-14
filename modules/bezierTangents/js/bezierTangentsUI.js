@@ -7,6 +7,15 @@ var BezierTangentsUI = (function () {
     let bezierValues = [0.40, 0.14, 0.30, 1.00]; // Default cubic-bezier style values
     let bezierEditor;
 
+    // Resize handle variables
+    let resizeHandle = null;
+    let canvasContainer = null;
+    let isResizing = false;
+    let startY = 0;
+    let startHeight = 0;
+    let minHeight = 150;
+    let maxHeight = 600;
+
     /**
      * Initialize the module's UI
      */
@@ -56,8 +65,17 @@ var BezierTangentsUI = (function () {
             </div>
         `;
 
+        // Get reference to canvas container
+        canvasContainer = document.getElementById('bezier-canvas-container');
+
+        // Load saved height before initializing editor
+        loadSavedHeight();
+
         // Initialize the cubic bezier editor
         initBezierEditor();
+
+        // Initialize resize handle
+        initResizeHandle();
 
         // Set up event listeners
         setupEventListeners();
@@ -116,6 +134,100 @@ var BezierTangentsUI = (function () {
     }
 
     /**
+     * Initialize the resize handle
+     */
+    function initResizeHandle() {
+        if (!canvasContainer) {
+            console.error('Canvas container not found');
+            return;
+        }
+
+        // Create resize handle
+        resizeHandle = document.createElement('div');
+        resizeHandle.className = 'bezier-resize-handle';
+        resizeHandle.innerHTML = '<div class="resize-handle-bar"></div>';
+
+        // Insert handle after the canvas container
+        canvasContainer.parentElement.insertBefore(resizeHandle, canvasContainer.nextSibling);
+
+        // Add event listeners
+        resizeHandle.addEventListener('mousedown', startResize);
+        document.addEventListener('mousemove', performResize);
+        document.addEventListener('mouseup', stopResize);
+    }
+
+    /**
+     * Load saved height from storage
+     */
+    function loadSavedHeight() {
+        if (!canvasContainer) return;
+
+        try {
+            const savedHeight = localStorage.getItem('bezierCurveHeight');
+            if (savedHeight) {
+                const height = parseInt(savedHeight, 10);
+                if (height >= minHeight && height <= maxHeight) {
+                    canvasContainer.style.height = height + 'px';
+                }
+            }
+        } catch (e) {
+            console.warn('Could not load saved curve height:', e);
+        }
+    }
+
+    /**
+     * Start resizing
+     */
+    function startResize(e) {
+        e.preventDefault();
+        isResizing = true;
+        startY = e.clientY;
+        startHeight = canvasContainer.offsetHeight;
+        resizeHandle.classList.add('active');
+        document.body.style.cursor = 'ns-resize';
+    }
+
+    /**
+     * Perform resize while dragging
+     */
+    function performResize(e) {
+        if (!isResizing) return;
+
+        e.preventDefault();
+        const deltaY = e.clientY - startY;
+        const newHeight = startHeight + deltaY;
+
+        // Constrain to min/max height
+        const constrainedHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
+
+        canvasContainer.style.height = constrainedHeight + 'px';
+
+        // Trigger canvas redraw if the editor has a resize method
+        if (bezierEditor && typeof bezierEditor.resize === 'function') {
+            bezierEditor.resize();
+        }
+    }
+
+    /**
+     * Stop resizing
+     */
+    function stopResize(e) {
+        if (!isResizing) return;
+
+        isResizing = false;
+        resizeHandle.classList.remove('active');
+        document.body.style.cursor = 'default';
+
+        // Save the height to localStorage for persistence
+        const finalHeight = canvasContainer.offsetHeight;
+        try {
+            localStorage.setItem('bezierCurveHeight', finalHeight);
+        } catch (e) {
+            console.warn('Could not save curve height:', e);
+        }
+    }
+
+    /**
      * Set up event listeners for the UI controls
      */
     function setupEventListeners() {
@@ -164,7 +276,6 @@ var BezierTangentsUI = (function () {
 
                 if (response.error) {
                     NotificationSystem.error('Error: ' + response.error);
-
                     return;
                 }
 
@@ -173,6 +284,7 @@ var BezierTangentsUI = (function () {
                     bezierEditor.setValues(bezierValues);
                     updateValueDisplay();
                     NotificationSystem.success('Bezier values retrieved from keyframes');
+
                 } else {
                     NotificationSystem.warning('No valid bezier values found');
                 }
@@ -199,7 +311,7 @@ var BezierTangentsUI = (function () {
                 const response = JSON.parse(result);
 
                 if (response.error) {
-                    NotificationSystem.error('Error: ' + response.error, 'error');
+                    NotificationSystem.error('Error: ' + response.error);
                 } else {
                     NotificationSystem.success('Applied bezier values to keyframes');
                 }
@@ -241,8 +353,24 @@ var BezierTangentsUI = (function () {
         display.textContent = `Bezier Values: ${roundedValues.join(', ')}`;
     }
 
+
+    /**
+     * Cleanup function - destroys resize handle and removes event listeners
+     */
+    function destroy() {
+        if (resizeHandle) {
+            resizeHandle.removeEventListener('mousedown', startResize);
+            resizeHandle.remove();
+            resizeHandle = null;
+        }
+        document.removeEventListener('mousemove', performResize);
+        document.removeEventListener('mouseup', stopResize);
+        document.body.style.cursor = 'default';
+    }
+
     // Public API
     return {
-        init: init
+        init: init,
+        destroy: destroy
     };
 })();
