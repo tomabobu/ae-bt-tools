@@ -14,7 +14,7 @@ var BezierTangentsUI = (function () {
     let isResizing = false;
     let startY = 0;
     let startHeight = 0;
-    let minHeight = 150;
+    let minHeight = 50;
     let maxHeight = 600;
 
     /**
@@ -124,6 +124,11 @@ var BezierTangentsUI = (function () {
         };
     }
 
+    function roundBezierValues(values) {
+        var roundedValues = bezierValues.map(v => Math.round(v * 100) / 100);
+        return roundedValues.join(', ');
+    }
+
     /**
      * Build the main UI
      */
@@ -135,7 +140,7 @@ var BezierTangentsUI = (function () {
                 
                 <div class="bezier-controls">
                     <div id="bezier-values-display" class="bezier-values-display">
-                        Bezier Values: ${bezierValues.join(', ')}
+                        Values: ${roundBezierValues(bezierValues)}
                     </div>
                     
                     <div class="button-row">
@@ -145,7 +150,7 @@ var BezierTangentsUI = (function () {
                     </div>
                     
                     <div id="bezier-manual-input" class="bezier-manual-input" style="display: none;">
-                        <input type="text" id="manual-bezier-input" value="${bezierValues.join(', ')}" placeholder="e.g., 0.4, 0.14, 0.3, 1">
+                        <input type="text" id="manual-bezier-input" value="${roundBezierValues(bezierValues)}" placeholder="e.g., 0.4, 0.14, 0.3, 1">
                         <button id="btn-accept-manual">Accept</button>
                         <button id="btn-cancel-manual" class="secondary">Cancel</button>
                     </div>
@@ -577,9 +582,12 @@ var BezierTangentsUI = (function () {
         e.preventDefault();
         isResizing = true;
         startY = e.clientY;
-        startHeight = canvasContainer.offsetHeight;
+        // Use the actual style height instead of offsetHeight
+        const currentHeight = parseInt(canvasContainer.style.height) || canvasContainer.offsetHeight;
+        startHeight = currentHeight;
         resizeHandle.classList.add('active');
         document.body.style.cursor = 'ns-resize';
+        maxHeight = canvasContainer.offsetWidth * 1.05;
     }
 
     function performResize(e) {
@@ -611,7 +619,7 @@ var BezierTangentsUI = (function () {
         document.getElementById('btn-set-bezier').addEventListener('click', setBezierValues);
         document.getElementById('btn-manual-bezier').addEventListener('click', () => {
             document.getElementById('bezier-manual-input').style.display = 'flex';
-            document.getElementById('manual-bezier-input').value = bezierValues.join(', ');
+            document.getElementById('manual-bezier-input').value = roundBezierValues(bezierValues);
         });
         document.getElementById('btn-accept-manual').addEventListener('click', acceptManualInput);
         document.getElementById('btn-cancel-manual').addEventListener('click', () => {
@@ -778,8 +786,7 @@ var BezierTangentsUI = (function () {
 
     function updateValueDisplay() {
         const display = document.getElementById('bezier-values-display');
-        const roundedValues = bezierValues.map(v => Math.round(v * 1000) / 1000);
-        display.textContent = `Bezier Values: ${roundedValues.join(', ')}`;
+        display.textContent = `Values: ${roundBezierValues(bezierValues)}`;
     }
 
     function destroy() {
