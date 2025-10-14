@@ -97,6 +97,12 @@ var ColorSwatchesUI = (function () {
                     </div>
                 </div>
             `;
+
+            // Add unified drop handlers to the main container
+            const colorSwatchesContainer = container.querySelector('.color-swatches-container');
+            colorSwatchesContainer.addEventListener('dragover', handleUnifiedDragOver);
+            colorSwatchesContainer.addEventListener('drop', handleUnifiedDrop);
+
             populateSwatches();
             setupEventListeners();
             addCheckboxListener("hideCollapsedGroups", "hideCollapsedGroups");
@@ -134,10 +140,8 @@ var ColorSwatchesUI = (function () {
             groupElement.draggable = true;
             groupElement.dataset.groupIndex = groupIndex;
 
-            // Add drag events for groups
+            // Add drag events for groups (only dragstart and dragend)
             groupElement.addEventListener('dragstart', handleGroupDragStart);
-            groupElement.addEventListener('dragover', handleGroupDragOver);
-            groupElement.addEventListener('drop', handleGroupDrop);
             groupElement.addEventListener('dragend', handleGroupDragEnd);
 
             // Check if we should hide group names
@@ -175,12 +179,11 @@ var ColorSwatchesUI = (function () {
                     swatchElement.style.width = swatchElement.style.height = `${library.swatchSize}px`;
                     swatchElement.dataset.groupIndex = groupIndex;
                     swatchElement.dataset.swatchIndex = swatchIndex;
+                    swatchElement.setAttribute('tooltip-message', `${swatch.name}\n${swatch.hex}`);
                     swatchElement.draggable = true;
 
-                    // Add drag events for swatches
+                    // Add drag events for swatches (only dragstart and dragend)
                     swatchElement.addEventListener('dragstart', handleSwatchDragStart);
-                    swatchElement.addEventListener('dragover', handleSwatchDragOver);
-                    swatchElement.addEventListener('drop', handleSwatchDrop);
                     swatchElement.addEventListener('dragend', handleSwatchDragEnd);
 
                     swatchesContainer.appendChild(swatchElement);
@@ -194,76 +197,194 @@ var ColorSwatchesUI = (function () {
     }
 
     /**
-     * Swatch drag and drop handlers
+     * Unified drag over handler for the entire container
      */
-    function handleSwatchDragStart(e) {
-        draggedSwatch = {
-            groupIndex: parseInt(this.dataset.groupIndex),
-            swatchIndex: parseInt(this.dataset.swatchIndex),
-            element: this
-        };
-        this.classList.add('dragging-swatch');
-        e.dataTransfer.effectAllowed = isShiftPressed ? 'copy' : 'move';
-        e.dataTransfer.setData('text/html', this.innerHTML);
-    }
-
-    function handleSwatchDragOver(e) {
+    function handleUnifiedDragOver(e) {
         if (e.preventDefault) {
             e.preventDefault();
         }
 
-        if (!draggedSwatch) return false;
-
-        e.dataTransfer.dropEffect = isShiftPressed ? 'copy' : 'move';
-
-        // Remove all existing swatch drop indicators
-        document.querySelectorAll('.swatch-drop-indicator').forEach(el => el.remove());
-
-        // Highlight this swatch with dashed border
-        document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('drop-target'));
-        this.classList.add('drop-target');
-
-        // Calculate if we should show indicator before or after this swatch
-        const rect = this.getBoundingClientRect();
-        const midpoint = rect.left + rect.width / 2;
-        const showBefore = e.clientX < midpoint;
-
-        // Create and position drop indicator
-        const indicator = document.createElement('div');
-        indicator.className = 'swatch-drop-indicator';
-        indicator.style.height = `${library.swatchSize}px`;
-
-        if (showBefore) {
-            this.parentNode.insertBefore(indicator, this);
-        } else {
-            this.parentNode.insertBefore(indicator, this.nextSibling);
+        // Determine what's being dragged
+        if (draggedSwatch) {
+            e.dataTransfer.dropEffect = isShiftPressed ? 'copy' : 'move';
+            handleSwatchDragOverUnified(e);
+        } else if (draggedGroup) {
+            e.dataTransfer.dropEffect = isShiftPressed ? 'copy' : 'move';
+            handleGroupDragOverUnified(e);
         }
 
         return false;
     }
 
-    function handleSwatchDrop(e) {
-        if (e.stopPropagation) {
-            e.stopPropagation();
-        }
-
-        // Remove drop indicators and highlights
+    /**
+     * Handle swatch drag over anywhere in the container
+     */
+    function handleSwatchDragOverUnified(e) {
+        // Remove all existing swatch drop indicators
         document.querySelectorAll('.swatch-drop-indicator').forEach(el => el.remove());
         document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('drop-target'));
 
-        if (!draggedSwatch) return false;
+        // Find all swatch containers
+        const swatchContainers = document.querySelectorAll('.group-swatches:not(.hidden)');
 
-        const targetGroupIndex = parseInt(this.dataset.groupIndex);
-        const targetSwatchIndex = parseInt(this.dataset.swatchIndex);
+        let closestSwatch = null;
+        let closestContainer = null;
+        let closestDistance = Infinity;
+        let insertBefore = true;
 
-        // Calculate if dropping before or after target
-        const rect = this.getBoundingClientRect();
-        const midpoint = rect.left + rect.width / 2;
-        const dropBefore = e.clientX < midpoint;
-        const adjustedTargetIndex = dropBefore ? targetSwatchIndex : targetSwatchIndex + 1;
+        // Check all swatches in all visible groups
+        swatchContainers.forEach(container => {
+            const swatches = Array.from(container.querySelectorAll('.color-swatch'));
+
+            swatches.forEach(swatch => {
+                const rect = swatch.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                const distance = Math.sqrt(
+                    Math.pow(e.clientX - centerX, 2) +
+                    Math.pow(e.clientY - centerY, 2)
+                );
+
+                if (distance < closestDistance) {
+                    closestDistance = distance;
+                    closestSwatch = swatch;
+                    closestContainer = container;
+                    insertBefore = e.clientX < centerX;
+                }
+            });
+
+            // Also consider empty space in the container
+            if (swatches.length === 0) {
+                const rect = container.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                const distance = Math.sqrt(
+                    Math.pow(e.clientX - centerX, 2) +
+                    Math.pow(e.clientY - centerY, 2)
+                );
+
+                if (distance < closestDistance) {
+                    closestDistance = distance;
+                    closestSwatch = null;
+                    closestContainer = container;
+                }
+            }
+        });
+
+        // Show drop indicator at the closest position
+        if (closestContainer) {
+            const indicator = document.createElement('div');
+            indicator.className = 'swatch-drop-indicator';
+            indicator.style.height = `${library.swatchSize}px`;
+
+            // Store the drop target info on the indicator for the drop handler
+            indicator.dataset.targetGroupIndex = closestContainer.id.replace('group-', '');
+
+            if (closestSwatch) {
+                indicator.dataset.targetSwatchIndex = closestSwatch.dataset.swatchIndex;
+                indicator.dataset.insertBefore = insertBefore;
+
+                if (insertBefore) {
+                    closestSwatch.parentNode.insertBefore(indicator, closestSwatch);
+                } else {
+                    closestSwatch.parentNode.insertBefore(indicator, closestSwatch.nextSibling);
+                }
+            } else {
+                // Empty container
+                indicator.dataset.targetSwatchIndex = '0';
+                indicator.dataset.insertBefore = 'true';
+                closestContainer.appendChild(indicator);
+            }
+        }
+    }
+
+    /**
+     * Handle group drag over anywhere in the container
+     */
+    function handleGroupDragOverUnified(e) {
+        // Remove all existing drop indicators
+        document.querySelectorAll('.group-drop-indicator').forEach(el => el.remove());
+
+        const swatchArea = document.getElementById('swatch-area');
+        const groups = Array.from(swatchArea.querySelectorAll('.swatch-group'));
+
+        if (groups.length === 0) {
+            return;
+        }
+
+        let closestGroup = null;
+        let closestDistance = Infinity;
+        let insertBefore = true;
+
+        groups.forEach(group => {
+            const rect = group.getBoundingClientRect();
+            const centerY = rect.top + rect.height / 2;
+            const distance = Math.abs(e.clientY - centerY);
+
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                closestGroup = group;
+                insertBefore = e.clientY < centerY;
+            }
+        });
+
+        if (closestGroup) {
+            const indicator = document.createElement('div');
+            indicator.className = 'group-drop-indicator';
+
+            // Store the drop target info on the indicator
+            indicator.dataset.targetGroupIndex = closestGroup.dataset.groupIndex;
+            indicator.dataset.insertBefore = insertBefore;
+
+            if (insertBefore) {
+                closestGroup.parentNode.insertBefore(indicator, closestGroup);
+            } else {
+                closestGroup.parentNode.insertBefore(indicator, closestGroup.nextSibling);
+            }
+        }
+    }
+
+    /**
+     * Unified drop handler for the entire container
+     */
+    function handleUnifiedDrop(e) {
+        if (e.stopPropagation) {
+            e.stopPropagation();
+        }
+        if (e.preventDefault) {
+            e.preventDefault();
+        }
+
+        // Handle based on what's being dragged
+        if (draggedSwatch) {
+            handleSwatchDropUnified(e);
+        } else if (draggedGroup) {
+            handleGroupDropUnified(e);
+        }
+
+        return false;
+    }
+
+    /**
+     * Handle swatch drop using indicator position
+     */
+    function handleSwatchDropUnified(e) {
+        // Find the drop indicator to get target position
+        const indicator = document.querySelector('.swatch-drop-indicator');
+
+        // Remove all indicators and highlights
+        document.querySelectorAll('.swatch-drop-indicator').forEach(el => el.remove());
+        document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('drop-target'));
+
+        if (!draggedSwatch || !indicator) return false;
+
+        const targetGroupIndex = parseInt(indicator.dataset.targetGroupIndex);
+        const targetSwatchIndex = parseInt(indicator.dataset.targetSwatchIndex);
+        const insertBefore = indicator.dataset.insertBefore === 'true';
+
+        const adjustedTargetIndex = insertBefore ? targetSwatchIndex : targetSwatchIndex + 1;
 
         if (isShiftPressed) {
-            // Duplicate swatch
             ColorSwatches.duplicateSwatch(
                 draggedSwatch.groupIndex,
                 draggedSwatch.swatchIndex,
@@ -277,7 +398,6 @@ var ColorSwatchesUI = (function () {
                 }
             );
         } else {
-            // Move swatch
             ColorSwatches.moveSwatch(
                 draggedSwatch.groupIndex,
                 draggedSwatch.swatchIndex,
@@ -295,76 +415,24 @@ var ColorSwatchesUI = (function () {
         return false;
     }
 
-    function handleSwatchDragEnd(e) {
-        this.classList.remove('dragging-swatch');
-        document.querySelectorAll('.swatch-drop-indicator').forEach(el => el.remove());
-        document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('drop-target'));
-        draggedSwatch = null;
-    }
-
     /**
-     * Group drag and drop handlers
+     * Handle group drop using indicator position
      */
-    function handleGroupDragStart(e) {
-        draggedGroup = {
-            groupIndex: parseInt(this.dataset.groupIndex),
-            element: this
-        };
-        this.style.opacity = '0.4';
-        e.dataTransfer.effectAllowed = isShiftPressed ? 'copy' : 'move';
-        e.dataTransfer.setData('text/html', this.innerHTML);
-    }
-
-    function handleGroupDragOver(e) {
-        if (e.preventDefault) {
-            e.preventDefault();
-        }
-
-        if (!draggedGroup) return false;
-
-        e.dataTransfer.dropEffect = isShiftPressed ? 'copy' : 'move';
-
-        // Remove all existing drop indicators
-        document.querySelectorAll('.group-drop-indicator').forEach(el => el.remove());
-
-        // Calculate if we should show indicator above or below
-        const rect = this.getBoundingClientRect();
-        const midpoint = rect.top + rect.height / 2;
-        const showAbove = e.clientY < midpoint;
-
-        // Create and position drop indicator
-        const indicator = document.createElement('div');
-        indicator.className = 'group-drop-indicator';
-
-        if (showAbove) {
-            this.parentNode.insertBefore(indicator, this);
-        } else {
-            this.parentNode.insertBefore(indicator, this.nextSibling);
-        }
-
-        return false;
-    }
-
-    function handleGroupDrop(e) {
-        if (e.stopPropagation) {
-            e.stopPropagation();
-        }
+    function handleGroupDropUnified(e) {
+        // Find the drop indicator to get target position
+        const indicator = document.querySelector('.group-drop-indicator');
 
         // Remove drop indicator
         document.querySelectorAll('.group-drop-indicator').forEach(el => el.remove());
 
-        if (!draggedGroup) return false;
+        if (!draggedGroup || !indicator) return false;
 
-        const targetGroupIndex = parseInt(this.dataset.groupIndex);
+        const targetGroupIndex = parseInt(indicator.dataset.targetGroupIndex);
+        const insertBefore = indicator.dataset.insertBefore === 'true';
 
-        // Calculate if dropping above or below target
-        const rect = this.getBoundingClientRect();
-        const midpoint = rect.top + rect.height / 2;
-        const dropAbove = e.clientY < midpoint;
-        const adjustedTargetIndex = dropAbove ? targetGroupIndex : targetGroupIndex + 1;
+        const adjustedTargetIndex = insertBefore ? targetGroupIndex : targetGroupIndex + 1;
 
         if (isShiftPressed) {
-            // Duplicate group
             ColorSwatches.duplicateGroup(draggedGroup.groupIndex, adjustedTargetIndex, () => {
                 ColorSwatches.loadLibrary((lib) => {
                     library = lib;
@@ -372,7 +440,6 @@ var ColorSwatchesUI = (function () {
                 });
             });
         } else {
-            // Move group
             ColorSwatches.moveGroup(draggedGroup.groupIndex, adjustedTargetIndex, () => {
                 ColorSwatches.loadLibrary((lib) => {
                     library = lib;
@@ -384,6 +451,46 @@ var ColorSwatchesUI = (function () {
         return false;
     }
 
+    /**
+     * Swatch drag start handler
+     */
+    function handleSwatchDragStart(e) {
+        draggedSwatch = {
+            groupIndex: parseInt(this.dataset.groupIndex),
+            swatchIndex: parseInt(this.dataset.swatchIndex),
+            element: this
+        };
+        this.classList.add('dragging-swatch');
+        e.dataTransfer.effectAllowed = isShiftPressed ? 'copy' : 'move';
+        e.dataTransfer.setData('text/html', this.innerHTML);
+    }
+
+    /**
+     * Swatch drag end handler
+     */
+    function handleSwatchDragEnd(e) {
+        this.classList.remove('dragging-swatch');
+        document.querySelectorAll('.swatch-drop-indicator').forEach(el => el.remove());
+        document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('drop-target'));
+        draggedSwatch = null;
+    }
+
+    /**
+     * Group drag start handler
+     */
+    function handleGroupDragStart(e) {
+        draggedGroup = {
+            groupIndex: parseInt(this.dataset.groupIndex),
+            element: this
+        };
+        this.style.opacity = '0.4';
+        e.dataTransfer.effectAllowed = isShiftPressed ? 'copy' : 'move';
+        e.dataTransfer.setData('text/html', this.innerHTML);
+    }
+
+    /**
+     * Group drag end handler
+     */
     function handleGroupDragEnd(e) {
         this.style.opacity = '1';
         document.querySelectorAll('.group-drop-indicator').forEach(el => el.remove());
