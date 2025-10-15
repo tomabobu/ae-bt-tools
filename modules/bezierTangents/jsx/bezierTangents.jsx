@@ -143,7 +143,6 @@ this.bezierTangents.setBezierValues = function(values) {
                 error: "Invalid bezier values provided."
             };
         }
-
         var bezValues = values || bezierTangents._bezierValues;
 
         var comp = app.project.activeItem;
@@ -159,6 +158,7 @@ this.bezierTangents.setBezierValues = function(values) {
                 error: "Select a property with keyframes."
             };
         }
+
 
         app.beginUndoGroup("Set Bezier Values");
 
@@ -181,12 +181,15 @@ this.bezierTangents.setBezierValues = function(values) {
                 );
 
                 for (var i = 1; i <= prop.numKeys; i++) {
+                    if (!prop.keySelected(i)) {
+                        continue; // Skip unselected keyframes
+                    }
                     var easeIn = new KeyframeEase(infSpd["in"][1], infSpd["in"][0]);
                     var easeOut = new KeyframeEase(infSpd["out"][1], infSpd["out"][0]);
 
                     var dimensions = 1;
-                    if (prop.value instanceof Array) {
-                        dimensions = prop.value.length;
+                    if (prop.keyInTemporalEase(i).length) {
+                        dimensions = prop.keyInTemporalEase(i).length;
                     }
 
                     var easeInArray = [];
@@ -205,6 +208,12 @@ this.bezierTangents.setBezierValues = function(values) {
             return true;
         } catch (innerError) {
             app.endUndoGroup();
+            // Undo the changes
+            var undoFinder = (app.findMenuCommandId("Undo Set Bezier Values"));
+            if (undoFinder) {
+                app.executeCommand(undoFinder);
+            }
+
             throw innerError;
         }
     } catch (e) {

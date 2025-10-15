@@ -22,7 +22,7 @@ var NotificationSystem = (function () {
      * @param {string} type - The type of notification ('info', 'success', 'warning', 'error')
      * @param {number} duration - How long to show the notification in milliseconds (default: 3000)
      */
-    function show(message, type = 'info', duration = 3000) {
+    function show(message, type = 'info', duration = 5000) {
         // Initialize container if it doesn't exist
         if (!notificationContainer) {
             init();

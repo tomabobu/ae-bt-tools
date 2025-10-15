@@ -1,10 +1,13 @@
 Bezier Tangents:
+# position not separated on X,Y...doesn't copy tangents
 # update UI for buttons to change to column arrange when panel width is small
 # Add functionality to copy values of selected keys and paste values (EaseCopy)
 # Update animation preview to use shape at the bottom of the curve
 # Test with different animations and keys selection
 # Add alert if graph has overshoot and properties are not separated
 # Add option to selec just one keyframe 
+# Add shortcuts for easy copy and paste
+
 
 Color Swatches:
 # start with Library Management folded
@@ -20,10 +23,12 @@ Other modules:
 # add down arrow at the right end of the modules tans to show a menu with all the modules
 
 
-# Create module for quick expressions: bounce, elastic movement (expressions or keyframes), parent with elastic connection, Loopy style expressions to loop animations
+connection, Loopy style expressions to loop animations
 # Create module to offset keys/layers (Rift plugin) based on curve and total offset
 # Create module for shape management: explode shapes, set pivot point
 # Module for gradients library
-# Create module for: counters, countdown, date, time
 # Create module to align multiple selection ("Layout" from PluginPlay), distribute groups (dynamic calculate groups based on overlapping bounding box), set distance between groups, distribute into grids (circular or rect back for cells -  fit, fill,), colage from input image to fill/distribute into shape
 # Create module to flex distribute into lines and grids (Flex plugin)
+
+
+

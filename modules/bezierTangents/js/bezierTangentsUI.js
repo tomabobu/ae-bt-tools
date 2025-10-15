@@ -737,8 +737,9 @@ var BezierTangentsUI = (function () {
         btn.disabled = true;
         csInterface.evalScript(`callModuleFunction("bezierTangents", "setBezierValues", ${JSON.stringify([bezierValues])})`, function (result) {
             btn.disabled = false;
+            console.log(JSON.parse(result));
             try {
-                const response = JSON.parse(result);
+                const response = JSON.parse(result).result;
                 if (response.error) {
                     NotificationSystem.error('Error: ' + response.error);
                 } else {
