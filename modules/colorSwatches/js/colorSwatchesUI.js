@@ -9,6 +9,7 @@ var ColorSwatchesUI = (function () {
     let library = null;
     let defaultHideCollapsedGroups = false;
     let defaultHideGroupNames = false;
+    let defaultEnableDrag = false;
     let draggedSwatch = null;
     let draggedGroup = null;
     let isShiftPressed = false;
@@ -51,6 +52,9 @@ var ColorSwatchesUI = (function () {
             if (!Object.hasOwn(library, 'hideGroupNames')) {
                 library.hideGroupNames = defaultHideGroupNames;
             }
+            if (!Object.hasOwn(library, 'enableDrag')) {
+                library.enableDrag = defaultEnableDrag;
+            }
 
             container.innerHTML = `
                 <div class="color-swatches-container">
@@ -86,6 +90,13 @@ var ColorSwatchesUI = (function () {
                                         Hide Collapsed Groups
                                     </label>
                                 </div>
+                                <div class="control-group">
+                                    <label class="checkbox-container">
+                                        <input type="checkbox" id="enableDrag">
+                                        <span class="checkmark"></span>
+                                        Enable Drag
+                                    </label>
+                                </div>
 
                                 <button id="btn-add-group" class="btn-full">Add New Group</button>
                                 <button id="btn-import-replace" class="btn-full">Import (Replace)</button>
@@ -106,6 +117,7 @@ var ColorSwatchesUI = (function () {
             populateSwatches();
             setupEventListeners();
             addCheckboxListener("hideCollapsedGroups", "hideCollapsedGroups");
+            addCheckboxListener("enableDrag", "enableDrag");
             addCheckboxListener("hideGroupNames", "hideGroupNames");
         });
     }
@@ -137,7 +149,7 @@ var ColorSwatchesUI = (function () {
         library.groups.forEach((group, groupIndex) => {
             const groupElement = document.createElement('div');
             groupElement.className = 'swatch-group';
-            groupElement.draggable = true;
+            if (library.enableDrag) { groupElement.draggable = true };
             groupElement.dataset.groupIndex = groupIndex;
 
             // Add drag events for groups (only dragstart and dragend)
@@ -180,7 +192,9 @@ var ColorSwatchesUI = (function () {
                     swatchElement.dataset.groupIndex = groupIndex;
                     swatchElement.dataset.swatchIndex = swatchIndex;
                     swatchElement.setAttribute('tooltip-message', `${swatch.name}\n${swatch.hex}`);
-                    swatchElement.draggable = true;
+                    if (library.enableDrag) {
+                        swatchElement.draggable = true;
+                    }
 
                     // Add drag events for swatches (only dragstart and dragend)
                     swatchElement.addEventListener('dragstart', handleSwatchDragStart);
@@ -455,6 +469,7 @@ var ColorSwatchesUI = (function () {
      * Swatch drag start handler
      */
     function handleSwatchDragStart(e) {
+        if (!library.enableDrag) { return; }
         draggedSwatch = {
             groupIndex: parseInt(this.dataset.groupIndex),
             swatchIndex: parseInt(this.dataset.swatchIndex),
@@ -479,6 +494,7 @@ var ColorSwatchesUI = (function () {
      * Group drag start handler
      */
     function handleGroupDragStart(e) {
+        if (!library.enableDrag) { return; }
         draggedGroup = {
             groupIndex: parseInt(this.dataset.groupIndex),
             element: this

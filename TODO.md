@@ -1,4 +1,5 @@
 Bezier Tangents:
+# update UI for buttons to change to column arrange when panel width is small
 # Add functionality to copy values of selected keys and paste values (EaseCopy)
 # Update animation preview to use shape at the bottom of the curve
 # Test with different animations and keys selection
@@ -7,12 +8,17 @@ Bezier Tangents:
 
 Color Swatches:
 # start with Library Management folded
+# add checkbox to calculate size so that the group with the most swatches fits to panel width
 
 Guide Generator:
 # Save the name of the composition while initializing and when UI updates, switch to that composition and refresh guides
 
+Modals:
+# change padding when panel width is small (responsive adjust)
 
 Other modules:
+# add down arrow at the right end of the modules tans to show a menu with all the modules
+
 
 # Create module for quick expressions: bounce, elastic movement (expressions or keyframes), parent with elastic connection, Loopy style expressions to loop animations
 # Create module to offset keys/layers (Rift plugin) based on curve and total offset
