@@ -133,7 +133,6 @@
     transition: background-color 0.2s ease;
     user-select: none;
     -webkit-user-select: none;
-    margin-bottom: 10px;
 }
 
 .bezier-resize-handle:hover {
@@ -215,10 +214,12 @@
     border-radius: 3px;
     border: 1px solid #444;
     color: #e6e6e6;
-    margin-bottom: 10px;
+    margin-bottom: 0px;
     font-size: 13px;
     overflow-x: auto;
     white-space: nowrap;
+    text-align: center;
+    cursor: pointer;
 }
 
 .bezier-manual-input {
@@ -249,6 +250,8 @@
 .button-row {
     display: flex;
     gap: 8px;
+    justify-content: space-between;
+    margin: 8px 0;
 }
 
 .bezier-button,
@@ -262,6 +265,7 @@
     font-size: 12px;
     min-width: 80px;
     transition: background-color 0.2s;
+    width: 100%;
 }
 
 .bezier-button:hover,
@@ -304,6 +308,7 @@
     align-items: center;
     justify-content: space-between;
     margin-bottom: 12px;
+    margin: 10px;
 }
 
 .preset-header h3 {
@@ -318,8 +323,8 @@
     display: flex;
     gap: 4px;
     margin-bottom: 12px;
-    overflow-x: auto;
     padding-bottom: 4px;
+
 }
 
 .preset-tab {
@@ -389,7 +394,7 @@
 
 /* Individual preset buttons */
 .bezier-preset {
-    width: 60px;
+    width: 60px !important;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -507,7 +512,7 @@
 .divider {
     height: 1px;
     background-color: #444;
-    margin: 15px 0;
+    margin: 5px 0;
 }
 
 /* ==================== LOADING STATE ==================== */
@@ -545,5 +550,11 @@
 @media (max-height: 600px) {
     .bezier-canvas-container {
         height: 200px;
+    }
+}
+
+@media (max-width: 300px) {
+    .button-row {
+        flex-direction: column;
     }
 }

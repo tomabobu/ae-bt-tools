@@ -142,14 +142,13 @@ var BezierTangentsUI = (function () {
                 </div>
                 
                 <div class="bezier-controls">
-                    <div id="bezier-values-display" class="bezier-values-display">
-                        Values: ${roundBezierValues(bezierValues)}
+                    <div id="bezier-values-display" class="bezier-values-display" tooltip-message="Bezier values. Click to set manually." tooltip-delay="1000">
+                        ${roundBezierValues(bezierValues)}
                     </div>
                     
                     <div class="button-row">
                         <button id="btn-get-bezier" tooltip-message="Get the bezier values from selected keyframes" tooltip-delay="1000" >${buttonGet}</button>
                         <button id="btn-set-bezier" tooltip-message="Set the tangents of selected keyframes" tooltip-delay="1000" >${buttonSet}</button>
-                        <button id="btn-manual-bezier" tooltip-message="Manual input the bezier values" tooltip-delay="1000">${buttonManual}</button>
                     </div>
                     
                     <div class="divider"></div>
@@ -621,7 +620,7 @@ var BezierTangentsUI = (function () {
     function setupEventListeners() {
         document.getElementById('btn-get-bezier').addEventListener('click', getBezierValues);
         document.getElementById('btn-set-bezier').addEventListener('click', setBezierValues);
-        document.getElementById('btn-manual-bezier').addEventListener('click', showManualInputModal);
+        document.getElementById('bezier-values-display').addEventListener('click', showManualInputModal);
 
     }
 
@@ -790,7 +789,7 @@ var BezierTangentsUI = (function () {
     }
     function updateValueDisplay() {
         const display = document.getElementById('bezier-values-display');
-        display.textContent = `Values: ${roundBezierValues(bezierValues)}`;
+        display.textContent = `${roundBezierValues(bezierValues)}`;
     }
 
     function destroy() {
