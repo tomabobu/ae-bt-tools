@@ -22,8 +22,12 @@ var TabManager = (function () {
     function init(cs) {
         csInterface = cs;
         loadConfiguration().then(() => {
-            setupUI();
+            setupTabNavigation();
             setupEventListeners();
+            // Activate first tab
+            if (currentConfig.tabs.length > 0) {
+                activateTab(0);
+            }
         });
     }
 
@@ -92,63 +96,24 @@ var TabManager = (function () {
     }
 
     /**
-     * Setup the UI based on current configuration
+     * Setup tab navigation buttons
      */
-    function setupUI() {
+    function setupTabNavigation() {
         const tabNav = document.getElementById('tab-nav');
-        const tabContent = document.getElementById('tab-content');
-
-        // Clear existing content
         tabNav.innerHTML = '';
-        tabContent.innerHTML = '';
 
-        // Create tabs
         currentConfig.tabs.forEach((tab, index) => {
-            createTab(tab, index);
-        });
+            const tabButton = document.createElement('button');
+            tabButton.className = 'tab-button';
+            tabButton.setAttribute('data-tab-index', index);
+            tabButton.textContent = getTabLabel(tab);
 
-        // Activate first tab
-        if (currentConfig.tabs.length > 0) {
-            activateTab(0);
-        }
-    }
-
-    /**
-     * Create a single tab
-     */
-    function createTab(tab, index) {
-        const tabNav = document.getElementById('tab-nav');
-        const tabContent = document.getElementById('tab-content');
-
-        // Create tab button
-        const tabButton = document.createElement('button');
-        tabButton.className = 'tab-button';
-        tabButton.setAttribute('data-tab-index', index);
-
-        // Tab label
-        const label = getTabLabel(tab);
-        tabButton.textContent = label;
-
-        tabNav.appendChild(tabButton);
-
-        // Create tab content container
-        const tabPane = document.createElement('div');
-        tabPane.className = 'tab-pane';
-        tabPane.setAttribute('data-tab-index', index);
-
-        // Create module containers within the tab
-        tab.modules.forEach((moduleData, moduleIndex) => {
-            const moduleContainer = createModuleContainer(moduleData, index, moduleIndex);
-            tabPane.appendChild(moduleContainer);
-
-            // Add divider between modules (except after last module)
-            if (moduleIndex < tab.modules.length - 1) {
-                const divider = createDivider(index, moduleIndex);
-                tabPane.appendChild(divider);
+            if (index === activeTabIndex) {
+                tabButton.classList.add('active');
             }
-        });
 
-        tabContent.appendChild(tabPane);
+            tabNav.appendChild(tabButton);
+        });
     }
 
     /**
@@ -163,136 +128,6 @@ var TabManager = (function () {
                 return name.split(' ')[0];
             }).join(' + ');
         }
-    }
-
-    /**
-     * Create a module container
-     */
-    function createModuleContainer(moduleData, tabIndex, moduleIndex) {
-        const container = document.createElement('div');
-        container.className = 'module-container';
-        container.id = `${moduleData.id}-container-${tabIndex}-${moduleIndex}`;
-        container.setAttribute('data-module-id', moduleData.id);
-        container.setAttribute('data-tab-index', tabIndex);
-        container.setAttribute('data-module-index', moduleIndex);
-        container.style.height = moduleData.height + '%';
-
-        return container;
-    }
-
-    /**
-     * Create a divider between modules
-     */
-    function createDivider(tabIndex, moduleIndex) {
-        const divider = document.createElement('div');
-        divider.className = 'module-divider';
-        divider.setAttribute('data-tab-index', tabIndex);
-        divider.setAttribute('data-module-index', moduleIndex);
-
-        // Create swap button
-        const swapButton = document.createElement('button');
-        swapButton.className = 'divider-swap-btn';
-        swapButton.innerHTML = '⇅';
-        swapButton.title = 'Swap modules';
-        divider.appendChild(swapButton);
-
-        setupDividerDrag(divider);
-        setupSwapButton(swapButton, tabIndex, moduleIndex);
-
-        return divider;
-    }
-
-    /**
-     * Setup drag functionality for divider
-     */
-    function setupDividerDrag(divider) {
-        let isDragging = false;
-        let startY = 0;
-        let startHeight1 = 0;
-        let startHeight2 = 0;
-        let container1, container2;
-
-        divider.addEventListener('mousedown', function (e) {
-            if (e.target.classList.contains('divider-swap-btn')) return;
-
-            isDragging = true;
-            startY = e.clientY;
-
-            const tabIndex = parseInt(divider.getAttribute('data-tab-index'));
-            const moduleIndex = parseInt(divider.getAttribute('data-module-index'));
-
-            const tabPane = document.querySelector(`.tab-pane[data-tab-index="${tabIndex}"]`);
-            const containers = tabPane.querySelectorAll('.module-container');
-            container1 = containers[moduleIndex];
-            container2 = containers[moduleIndex + 1];
-
-            startHeight1 = parseFloat(container1.style.height);
-            startHeight2 = parseFloat(container2.style.height);
-
-            document.body.style.cursor = 'ns-resize';
-            divider.classList.add('dragging');
-            e.preventDefault();
-        });
-
-        document.addEventListener('mousemove', function (e) {
-            if (!isDragging) return;
-
-            const tabPane = container1.parentElement;
-            const tabPaneHeight = tabPane.clientHeight;
-            const deltaY = e.clientY - startY;
-            const deltaPercent = (deltaY / tabPaneHeight) * 100;
-
-            let newHeight1 = startHeight1 + deltaPercent;
-            let newHeight2 = startHeight2 - deltaPercent;
-
-            // Clamp heights to reasonable values (10% minimum)
-            if (newHeight1 < 10) {
-                newHeight1 = 10;
-                newHeight2 = startHeight1 + startHeight2 - 10;
-            } else if (newHeight2 < 10) {
-                newHeight2 = 10;
-                newHeight1 = startHeight1 + startHeight2 - 10;
-            }
-
-            container1.style.height = newHeight1 + '%';
-            container2.style.height = newHeight2 + '%';
-        });
-
-        document.addEventListener('mouseup', function () {
-            if (!isDragging) return;
-
-            isDragging = false;
-            document.body.style.cursor = '';
-            divider.classList.remove('dragging');
-
-            // Save the new heights to configuration
-            const tabIndex = parseInt(divider.getAttribute('data-tab-index'));
-            const moduleIndex = parseInt(divider.getAttribute('data-module-index'));
-
-            currentConfig.tabs[tabIndex].modules[moduleIndex].height = parseFloat(container1.style.height);
-            currentConfig.tabs[tabIndex].modules[moduleIndex + 1].height = parseFloat(container2.style.height);
-
-            saveConfiguration();
-        });
-    }
-
-    /**
-     * Setup swap button functionality
-     */
-    function setupSwapButton(button, tabIndex, moduleIndex) {
-        button.addEventListener('click', function (e) {
-            e.stopPropagation();
-
-            const tab = currentConfig.tabs[tabIndex];
-            const temp = tab.modules[moduleIndex];
-            tab.modules[moduleIndex] = tab.modules[moduleIndex + 1];
-            tab.modules[moduleIndex + 1] = temp;
-
-            saveConfiguration().then(() => {
-                refreshCurrentTab();
-                NotificationSystem.success('Modules swapped');
-            });
-        });
     }
 
     /**
@@ -323,45 +158,216 @@ var TabManager = (function () {
      * Activate a tab
      */
     function activateTab(index) {
-        // Cleanup current tab modules
+        if (index === activeTabIndex) {
+            return; // Already active
+        }
+
+        console.log(`Activating tab ${index}`);
+
+        // Cleanup current tab if needed
         if (activeTabIndex !== null) {
-            cleanupTab(activeTabIndex);
+            cleanupCurrentTab();
         }
 
-        // Update active states
+        // Update active index
+        activeTabIndex = index;
+
+        // Update tab button states
         document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-        document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
-
-        const tabButton = document.querySelector(`.tab-button[data-tab-index="${index}"]`);
-        const tabPane = document.querySelector(`.tab-pane[data-tab-index="${index}"]`);
-
-        if (tabButton && tabPane) {
-            tabButton.classList.add('active');
-            tabPane.classList.add('active');
-            activeTabIndex = index;
-
-            // Initialize modules in this tab
-            initializeTabModules(index);
+        const activeButton = document.querySelector(`.tab-button[data-tab-index="${index}"]`);
+        if (activeButton) {
+            activeButton.classList.add('active');
         }
+
+        // Render the new tab
+        renderCurrentTab();
     }
 
     /**
-     * Initialize all modules in a tab (with lazy loading)
+     * Render the current active tab
      */
-    function initializeTabModules(tabIndex) {
-        const tab = currentConfig.tabs[tabIndex];
+    function renderCurrentTab() {
+        const tabContent = document.getElementById('tab-content');
+        const tab = currentConfig.tabs[activeTabIndex];
+
+        if (!tab) {
+            console.error('Tab not found:', activeTabIndex);
+            return;
+        }
+
+        // Clear the content area
+        tabContent.innerHTML = '';
+
+        // Create module containers for this tab
+        tab.modules.forEach((moduleData, moduleIndex) => {
+            const moduleContainer = createModuleContainer(moduleData, moduleIndex);
+            tabContent.appendChild(moduleContainer);
+
+            // Add divider between modules (except after last module)
+            if (moduleIndex < tab.modules.length - 1) {
+                const divider = createDivider(moduleIndex);
+                tabContent.appendChild(divider);
+            }
+        });
+
+        // Load and render modules
+        initializeTabModules();
+    }
+
+    /**
+     * Create a module container
+     */
+    function createModuleContainer(moduleData, moduleIndex) {
+        const container = document.createElement('div');
+        container.className = 'module-container';
+        container.id = `${moduleData.id}-container-${moduleIndex}`;
+        container.setAttribute('data-module-id', moduleData.id);
+        container.setAttribute('data-module-index', moduleIndex);
+        container.style.height = moduleData.height + '%';
+
+        return container;
+    }
+
+    /**
+     * Create a divider between modules
+     */
+    function createDivider(moduleIndex) {
+        const divider = document.createElement('div');
+        divider.className = 'module-divider';
+        divider.setAttribute('data-module-index', moduleIndex);
+
+        // Create swap button
+        const swapButton = document.createElement('button');
+        swapButton.className = 'divider-swap-btn';
+        swapButton.innerHTML = '⇅';
+        swapButton.title = 'Swap modules';
+        divider.appendChild(swapButton);
+
+        setupDividerDrag(divider);
+        setupSwapButton(swapButton, moduleIndex);
+
+        return divider;
+    }
+
+    /**
+     * Setup drag functionality for divider
+     */
+    function setupDividerDrag(divider) {
+        let isDragging = false;
+        let startY = 0;
+        let startHeight1 = 0;
+        let startHeight2 = 0;
+        let container1, container2;
+
+        divider.addEventListener('mousedown', function (e) {
+            if (e.target.classList.contains('divider-swap-btn')) return;
+
+            isDragging = true;
+            startY = e.clientY;
+
+            const moduleIndex = parseInt(divider.getAttribute('data-module-index'));
+            const tabContent = document.getElementById('tab-content');
+            const containers = tabContent.querySelectorAll('.module-container');
+            container1 = containers[moduleIndex];
+            container2 = containers[moduleIndex + 1];
+
+            startHeight1 = parseFloat(container1.style.height);
+            startHeight2 = parseFloat(container2.style.height);
+
+            document.body.style.cursor = 'ns-resize';
+            divider.classList.add('dragging');
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', function (e) {
+            if (!isDragging) return;
+
+            const tabContent = document.getElementById('tab-content');
+            const tabContentHeight = tabContent.clientHeight;
+            const deltaY = e.clientY - startY;
+            const deltaPercent = (deltaY / tabContentHeight) * 100;
+
+            let newHeight1 = startHeight1 + deltaPercent;
+            let newHeight2 = startHeight2 - deltaPercent;
+
+            // Clamp heights to reasonable values (10% minimum)
+            if (newHeight1 < 10) {
+                newHeight1 = 10;
+                newHeight2 = startHeight1 + startHeight2 - 10;
+            } else if (newHeight2 < 10) {
+                newHeight2 = 10;
+                newHeight1 = startHeight1 + startHeight2 - 10;
+            }
+
+            container1.style.height = newHeight1 + '%';
+            container2.style.height = newHeight2 + '%';
+        });
+
+        document.addEventListener('mouseup', function () {
+            if (!isDragging) return;
+
+            isDragging = false;
+            document.body.style.cursor = '';
+            divider.classList.remove('dragging');
+
+            // Save the new heights to configuration
+            const moduleIndex = parseInt(divider.getAttribute('data-module-index'));
+            currentConfig.tabs[activeTabIndex].modules[moduleIndex].height = parseFloat(container1.style.height);
+            currentConfig.tabs[activeTabIndex].modules[moduleIndex + 1].height = parseFloat(container2.style.height);
+
+            saveConfiguration();
+        });
+    }
+
+    /**
+     * Setup swap button functionality
+     */
+    function setupSwapButton(button, moduleIndex) {
+        button.addEventListener('click', function (e) {
+            e.stopPropagation();
+
+            const tab = currentConfig.tabs[activeTabIndex];
+            const temp = tab.modules[moduleIndex];
+            tab.modules[moduleIndex] = tab.modules[moduleIndex + 1];
+            tab.modules[moduleIndex + 1] = temp;
+
+            saveConfiguration().then(() => {
+                renderCurrentTab();
+                NotificationSystem.success('Modules swapped');
+            });
+        });
+    }
+
+    /**
+     * Initialize all modules in the current tab (with lazy loading)
+     */
+    function initializeTabModules() {
+        const tab = currentConfig.tabs[activeTabIndex];
+
+        if (!tab || !tab.modules || tab.modules.length === 0) {
+            console.warn(`No modules found for tab ${activeTabIndex}`);
+            return;
+        }
 
         // Load all modules in this tab (lazy loading)
         const loadPromises = tab.modules.map((moduleData, moduleIndex) => {
+            console.log(`Loading module ${moduleData.id} for tab ${activeTabIndex}`);
+
             return ModuleLoader.loadModule(moduleData.id).then(() => {
-                const containerId = `${moduleData.id}-container-${tabIndex}-${moduleIndex}`;
+                const containerId = `${moduleData.id}-container-${moduleIndex}`;
                 const container = document.getElementById(containerId);
 
-                if (container) {
-                    const module = ModuleLoader.getModule(moduleData.id);
-                    if (module && module.render) {
-                        module.render(container);
-                    }
+                if (!container) {
+                    console.error(`Container not found: ${containerId}`);
+                    return;
+                }
+
+                const module = ModuleLoader.getModule(moduleData.id);
+                if (module && module.render) {
+                    console.log(`Rendering module ${moduleData.id} in container ${containerId}`);
+                    module.render(container);
+                } else {
+                    console.error(`Module ${moduleData.id} does not have a render method`);
                 }
             }).catch(error => {
                 console.error(`Error loading module ${moduleData.id}:`, error);
@@ -371,17 +377,21 @@ var TabManager = (function () {
 
         // Wait for all modules to load
         Promise.all(loadPromises).then(() => {
-            console.log(`All modules loaded for tab ${tabIndex}`);
+            console.log(`All modules loaded for tab ${activeTabIndex}`);
         });
     }
 
     /**
-     * Cleanup a tab's modules
+     * Cleanup the current tab's modules
      */
-    function cleanupTab(tabIndex) {
-        const tab = currentConfig.tabs[tabIndex];
+    function cleanupCurrentTab() {
+        const tab = currentConfig.tabs[activeTabIndex];
+        if (!tab) return;
+
+        console.log(`Cleaning up tab ${activeTabIndex}`);
+
         tab.modules.forEach((moduleData, moduleIndex) => {
-            const containerId = `${moduleData.id}-container-${tabIndex}-${moduleIndex}`;
+            const containerId = `${moduleData.id}-container-${moduleIndex}`;
             const container = document.getElementById(containerId);
 
             if (container) {
@@ -389,28 +399,16 @@ var TabManager = (function () {
                 if (module && module.cleanup) {
                     module.cleanup(container);
                 }
-                container.innerHTML = '';
             }
         });
     }
 
     /**
-     * Refresh the current tab
+     * Refresh tab navigation and re-render current tab
      */
-    function refreshCurrentTab() {
-        const oldIndex = activeTabIndex;
-
-        // Cleanup all tabs before rebuilding
-        for (let i = 0; i < currentConfig.tabs.length; i++) {
-            cleanupTab(i);
-        }
-
-        // Rebuild entire UI
-        setupUI();
-
-        // Reactivate the same tab (or first tab if index is invalid)
-        const newIndex = Math.min(oldIndex, currentConfig.tabs.length - 1);
-        activateTab(newIndex);
+    function refreshTabs() {
+        setupTabNavigation();
+        renderCurrentTab();
     }
 
     /**
@@ -522,7 +520,9 @@ var TabManager = (function () {
                 tab.modules.push({ id: moduleId, height: newHeight });
 
                 saveConfiguration().then(() => {
-                    refreshCurrentTab();
+                    if (tabIndex === activeTabIndex) {
+                        renderCurrentTab();
+                    }
                     NotificationSystem.success('Module added to tab');
                 });
             }
@@ -575,7 +575,9 @@ var TabManager = (function () {
                 });
 
                 saveConfiguration().then(() => {
-                    refreshCurrentTab();
+                    if (tabIndex === activeTabIndex) {
+                        renderCurrentTab();
+                    }
                     NotificationSystem.success('Module removed from tab');
                 });
             }
@@ -592,20 +594,22 @@ var TabManager = (function () {
             return;
         }
 
-        // Swap tabs
+        // Determine which tab should be active after the swap
+        let newActiveIndex = activeTabIndex;
+        if (activeTabIndex === tabIndex) {
+            newActiveIndex = newIndex;
+        } else if (activeTabIndex === newIndex) {
+            newActiveIndex = tabIndex;
+        }
+
+        // Swap tabs in config
         const temp = currentConfig.tabs[tabIndex];
         currentConfig.tabs[tabIndex] = currentConfig.tabs[newIndex];
         currentConfig.tabs[newIndex] = temp;
 
         saveConfiguration().then(() => {
-            // Update active tab index
-            if (activeTabIndex === tabIndex) {
-                activeTabIndex = newIndex;
-            } else if (activeTabIndex === newIndex) {
-                activeTabIndex = tabIndex;
-            }
-
-            refreshCurrentTab();
+            activeTabIndex = newActiveIndex;
+            refreshTabs();
             NotificationSystem.success('Tab moved');
         });
     }
@@ -623,9 +627,11 @@ var TabManager = (function () {
             }
         ).then((confirmed) => {
             if (confirmed) {
+                cleanupCurrentTab();
                 currentConfig = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+                activeTabIndex = 0;
                 saveConfiguration().then(() => {
-                    refreshCurrentTab();
+                    refreshTabs();
                     NotificationSystem.success('Tabs reset to default');
                 });
             }
