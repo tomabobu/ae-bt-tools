@@ -4,7 +4,7 @@
 var TabManager = (function () {
     let csInterface;
     let currentConfig = null;
-    let activeTabIndex = 0;
+    let activeTabIndex = -1;
     const CONFIG_FILE_PATH = 'config.json';
 
     // Default configuration - each module in its own tab

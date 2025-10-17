@@ -58,10 +58,6 @@
 
         console.log('BT Tools initialized successfully');
 
-        // Show success notification if available
-        if (typeof NotificationSystem !== 'undefined') {
-            NotificationSystem.success('BT Tools initialized');
-        }
     }
 
     // Start initialization when DOM is ready

@@ -10,6 +10,7 @@
  */
 const ModuleConfig = {
     "bezierTangents": "Animation Tangent",
+    "timeOffset": "Time Offset",
     "colorSwatches": "Colors Library",
     "guideGenerator": "Guides",
 };

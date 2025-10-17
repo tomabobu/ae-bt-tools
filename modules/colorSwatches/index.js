@@ -62,7 +62,6 @@ var colorSwatches = (function () {
             console.log('ColorSwatches not yet initialized, waiting...');
             const checkInterval = setInterval(() => {
                 if (isInitialized && typeof ColorSwatchesUI !== 'undefined') {
-                    console.log("interval color swatches")
                     clearInterval(checkInterval);
                     initializeUI(modulePane);
                 }
@@ -94,10 +93,8 @@ var colorSwatches = (function () {
         if (typeof ColorSwatchesUI !== 'undefined' && ColorSwatchesUI.init) {
             // If UI has already been initialized before, render instead
             if (typeof ColorSwatchesUI.render === 'function') {
-                console.log("rener color swatches");
                 ColorSwatchesUI.render(modulePane);
             } else {
-                console.log("rener color init")
                 ColorSwatchesUI.init(csInterface, modulePane);
             }
         } else {

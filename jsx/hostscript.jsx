@@ -168,9 +168,9 @@ function getEnvironmentInfo() {
  * @return {string} - Test message
  */
 function testConnection() {
-    return {
+    return JSON.stringify({
         result: "JSX connection working. Extension path: " + (g_extensionPath || "Not set")
-    };
+    });
 }
 
 /**

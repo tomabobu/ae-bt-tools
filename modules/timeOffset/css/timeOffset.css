@@ -1,0 +1,240 @@
+/* Time Offset Module Styles */
+
+.time-offset-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 15px;
+    box-sizing: border-box;
+}
+
+
+.time-offset-content {
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* Form Elements */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #a0a0a0;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.form-control {
+    width: 100%;
+    padding: 8px 12px;
+    background: #2a2a2a;
+    border: 1px solid #404040;
+    border-radius: 4px;
+    color: #e0e0e0;
+    font-size: 13px;
+    box-sizing: border-box;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #4a9eff;
+}
+
+/* Radio Groups */
+.radio-group {
+    display: flex;
+    gap: 15px;
+}
+
+.radio-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    color: #c0c0c0;
+    font-size: 13px;
+}
+
+.radio-label input[type="radio"] {
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+}
+
+.radio-label:hover span {
+    color: #e0e0e0;
+}
+
+/* Number Inputs with Spinners */
+.number-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: #2a2a2a;
+    border: 1px solid #404040;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.number-input-wrapper:focus-within {
+    border-color: #4a9eff;
+}
+
+.number-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 8px 12px;
+    text-align: center;
+    -moz-appearance: textfield;
+}
+
+.number-input::-webkit-outer-spin-button,
+.number-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.spinner-btn {
+    width: 28px;
+    height: 32px;
+    background: #3a3a3a;
+    border: none;
+    color: #c0c0c0;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.spinner-btn:hover {
+    background: #454545;
+    color: #e0e0e0;
+}
+
+.spinner-btn:active {
+    background: #505050;
+}
+
+.spinner-down {
+    border-right: 1px solid #404040;
+}
+
+.spinner-up {
+    border-left: 1px solid #404040;
+}
+
+/* Curve Editor Container */
+#curve-editor-container {
+    background: #1a1a1a;
+    border: 1px solid #404040;
+    border-radius: 4px;
+    padding: 10px;
+    min-height: 250px;
+}
+
+/* Random Offset Group */
+.random-offset-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.random-input-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.input-label {
+    color: #a0a0a0;
+    font-size: 13px;
+    min-width: 45px;
+}
+
+.random-input-row .number-input-wrapper {
+    flex: 1;
+}
+
+/* Buttons */
+.button-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #404040;
+}
+
+.btn {
+    flex: 1;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: #4a9eff;
+    color: #ffffff;
+}
+
+.btn-primary:hover {
+    background: #5fadff;
+}
+
+.btn-primary:active {
+    background: #3a8eef;
+}
+
+.btn-secondary {
+    background: #3a3a3a;
+    color: #e0e0e0;
+    border: 1px solid #404040;
+}
+
+.btn-secondary:hover {
+    background: #454545;
+    border-color: #505050;
+}
+
+.btn-secondary:active {
+    background: #505050;
+}
+
+/* Scrollbar */
+.time-offset-content::-webkit-scrollbar {
+    width: 10px;
+}
+
+.time-offset-content::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+
+.time-offset-content::-webkit-scrollbar-thumb {
+    background: #404040;
+    border-radius: 5px;
+}
+
+.time-offset-content::-webkit-scrollbar-thumb:hover {
+    background: #505050;
+}
+
+/* Responsive adjustments */
+@media (max-width: 400px) {
+    .radio-group {
+        flex-direction: row;
+        gap: 10px;
+    }
+
+    .button-group {
+        flex-direction: row;
+    }
+}
