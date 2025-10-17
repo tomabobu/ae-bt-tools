@@ -1,112 +1,246 @@
 /**
+ * Module Configuration and Loader
+ * Handles lazy loading of modules on demand
+ */
+
+/**
  * Module configuration
- * Key: Module folder name
- * Value: Display name for the tab
+ * Key: Module folder name (must match folder in /modules/)
+ * Value: Display name for the module in tabs
  */
 const ModuleConfig = {
     "bezierTangents": "Animation Tangent",
     "colorSwatches": "Colors Library",
-    "guideGenerator": "Guides"
+    "guideGenerator": "Guides",
 };
 
 /**
- * Module loader
+ * Module Loader
+ * Handles dynamic lazy loading of modules
  */
 const ModuleLoader = {
     loadedModules: {},
-    loadedScripts: {}, // Track loaded script elements
-    loadedStyles: {},  // Track loaded style elements
+    loadingModules: {},
+    csInterface: null,
 
     /**
-     * Load a single module on-demand
+     * Initialize the module loader
+     * @param {CSInterface} csInterface - The CSInterface instance
      */
-    loadModule: function (moduleId, csInterface) {
-        // If already loaded, just return resolved promise
-        if (this.loadedModules[moduleId]) {
-            return Promise.resolve(moduleId);
-        }
-
-        return new Promise((resolve, reject) => {
-            // Load CSS
-            this.loadModuleCSS(moduleId);
-
-            // Load JS
-            const script = document.createElement('script');
-            script.src = `modules/${moduleId}/index.js`;
-            script.onload = () => {
-                if (window[moduleId] && typeof window[moduleId].init === 'function') {
-                    this.loadedModules[moduleId] = window[moduleId];
-                    this.loadedScripts[moduleId] = script;
-                    window[moduleId].init(csInterface);
-                    resolve(moduleId);
-                } else {
-                    console.warn(`Module ${moduleId} does not have an init function`);
-                    resolve(moduleId);
-                }
-            };
-            script.onerror = () => {
-                reject(new Error(`Failed to load module: ${moduleId}`));
-            };
-            document.head.appendChild(script);
-        });
+    init: function (csInterface) {
+        this.csInterface = csInterface;
+        console.log('ModuleLoader initialized');
     },
 
     /**
-     * Unload a module and clean up resources
+     * Load a single module (lazy loading)
+     * @param {string} moduleId - The module ID (folder name)
+     * @returns {Promise} - Resolves when the module is loaded
+     */
+    loadModule: function (moduleId) {
+        // Return existing module if already loaded
+        if (this.loadedModules[moduleId]) {
+            console.log(`Module ${moduleId} already loaded`);
+            return Promise.resolve(this.loadedModules[moduleId]);
+        }
+
+        // Return existing promise if currently loading
+        if (this.loadingModules[moduleId]) {
+            console.log(`Module ${moduleId} is currently loading`);
+            return this.loadingModules[moduleId];
+        }
+
+        console.log(`Loading module: ${moduleId}`);
+
+        // Create loading promise
+        const loadPromise = new Promise((resolve, reject) => {
+            // First, load the CSS for the module
+            this.loadModuleCSS(moduleId);
+
+            // Then load the main module script (index.js)
+            const script = document.createElement('script');
+            script.src = `modules/${moduleId}/index.js`;
+
+            script.onload = () => {
+                console.log(`Module script loaded: ${moduleId}`);
+
+                // Once loaded, initialize the module if it exports an init function
+                if (window[moduleId] && typeof window[moduleId].init === 'function') {
+                    this.loadedModules[moduleId] = window[moduleId];
+
+                    // Call the module's init function
+                    if (this.csInterface) {
+                        window[moduleId].init(this.csInterface);
+                    }
+
+                    // Ensure the module has render and cleanup methods
+                    this.ensureModuleMethods(moduleId);
+
+                    console.log(`Module initialized: ${moduleId}`);
+                    delete this.loadingModules[moduleId];
+                    resolve(this.loadedModules[moduleId]);
+                } else {
+                    console.warn(`Module ${moduleId} does not have an init function`);
+
+                    // Still add default methods even if init is missing
+                    this.loadedModules[moduleId] = window[moduleId] || {};
+                    this.ensureModuleMethods(moduleId);
+
+                    delete this.loadingModules[moduleId];
+                    resolve(this.loadedModules[moduleId]);
+                }
+            };
+
+            script.onerror = () => {
+                console.error(`Failed to load module: ${moduleId}`);
+                delete this.loadingModules[moduleId];
+                reject(new Error(`Failed to load module: ${moduleId}`));
+            };
+
+            document.head.appendChild(script);
+        });
+
+        // Store the loading promise
+        this.loadingModules[moduleId] = loadPromise;
+        return loadPromise;
+    },
+
+    /**
+     * Unload a module and clean up its resources
+     * @param {string} moduleId - The module ID
      */
     unloadModule: function (moduleId) {
         const module = this.loadedModules[moduleId];
+        if (module) {
+            console.log(`Unloading module: ${moduleId}`);
 
-        // Call cleanup function if module has one
-        if (module && typeof module.cleanup === 'function') {
-            module.cleanup();
+            // Call cleanup if available
+            if (module.cleanup) {
+                const container = document.getElementById(moduleId);
+                if (container) {
+                    module.cleanup(container);
+                }
+            }
+
+            // Note: We keep the module in loadedModules for quick reloading
+            // Just clean up the UI, don't remove the code
+        }
+    },
+
+    /**
+     * Ensure a module has the required render and cleanup methods
+     * If they don't exist, add default implementations
+     * @param {string} moduleId - The module ID
+     */
+    ensureModuleMethods: function (moduleId) {
+        const module = this.loadedModules[moduleId];
+
+        // Add default render method if it doesn't exist
+        if (!module.render) {
+            module.render = (container) => {
+                console.log(`Rendering module: ${moduleId}`);
+
+                // Create the module's content container
+                const modulePane = document.createElement('div');
+                modulePane.id = moduleId;
+                modulePane.className = 'module-content';
+                container.appendChild(modulePane);
+
+                // If the module has a UI initialization function, call it
+                // This supports different naming conventions modules might use
+                if (module.initUI) {
+                    module.initUI(modulePane);
+                } else if (module.renderUI) {
+                    module.renderUI(modulePane);
+                } else if (module.loadUI) {
+                    module.loadUI(modulePane);
+                } else {
+                    // Create a placeholder if no UI method exists
+                    modulePane.innerHTML = `
+                        <div style="padding: 20px; color: #a0a0a0; text-align: center;">
+                            <h3>${ModuleConfig[moduleId]}</h3>
+                            <p>Module loaded but no UI available</p>
+                        </div>
+                    `;
+                }
+            };
         }
 
-        // Remove script element
-        if (this.loadedScripts[moduleId]) {
-            this.loadedScripts[moduleId].remove();
-            delete this.loadedScripts[moduleId];
-        }
+        // Add default cleanup method if it doesn't exist
+        if (!module.cleanup) {
+            module.cleanup = (container) => {
+                console.log(`Cleaning up module: ${moduleId}`);
 
-        // Remove style element
-        if (this.loadedStyles[moduleId]) {
-            this.loadedStyles[moduleId].remove();
-            delete this.loadedStyles[moduleId];
-        }
+                // Call module's cleanup method if it exists
+                if (module.cleanupUI) {
+                    module.cleanupUI();
+                } else if (module.destroy) {
+                    module.destroy();
+                }
 
-        // Clear module from window
-        if (window[moduleId]) {
-            delete window[moduleId];
+                // Clear the container
+                if (container) {
+                    container.innerHTML = '';
+                }
+            };
         }
-
-        // Clear DOM content
-        const tabPane = document.getElementById(moduleId);
-        if (tabPane) {
-            tabPane.innerHTML = '';
-        }
-
-        delete this.loadedModules[moduleId];
     },
 
     /**
      * Load CSS files for a module
+     * @param {string} moduleId - The module ID
      */
     loadModuleCSS: function (moduleId) {
+        // Check if CSS is already loaded
+        const existingLink = document.querySelector(`link[href*="${moduleId}.css"]`);
+        if (existingLink) {
+            return;
+        }
+
         const link = document.createElement('link');
         link.rel = 'stylesheet';
         link.href = `modules/${moduleId}/css/${moduleId}.css`;
+
+        // Handle CSS load errors gracefully
+        link.onerror = () => {
+            console.warn(`CSS file not found for module: ${moduleId}`);
+        };
+
         document.head.appendChild(link);
-        this.loadedStyles[moduleId] = link;
     },
 
     /**
      * Get a loaded module by ID
+     * @param {string} moduleId - The module ID
+     * @returns {Object|null} - The module object or null if not found
      */
     getModule: function (moduleId) {
-        return this.loadedModules[moduleId];
+        return this.loadedModules[moduleId] || null;
+    },
+
+    /**
+     * Check if a module is loaded
+     * @param {string} moduleId - The module ID
+     * @returns {boolean} - True if the module is loaded
+     */
+    isModuleLoaded: function (moduleId) {
+        return !!this.loadedModules[moduleId];
+    },
+
+    /**
+     * Check if a module is currently loading
+     * @param {string} moduleId - The module ID
+     * @returns {boolean} - True if the module is loading
+     */
+    isModuleLoading: function (moduleId) {
+        return !!this.loadingModules[moduleId];
+    },
+
+    /**
+     * Get all loaded module IDs
+     * @returns {Array<string>} - Array of loaded module IDs
+     */
+    getLoadedModuleIds: function () {
+        return Object.keys(this.loadedModules);
     }
 };
-
-// Verify the config loaded
-// console.log('ModuleConfig loaded:', ModuleConfig);
-// console.log('ModuleLoader loaded:', ModuleLoader);

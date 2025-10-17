@@ -550,3 +550,144 @@ input[type="number"].drag-adjusting {
 body.drag-adjusting-active {
     cursor: ew-resize !important;
 }
+
+/* ==================== TABS MODULE CONTAINERS ==================== */
+/* Module Containers */
+.module-container {
+    position: relative;
+    background: #1a1a1a;
+    border-bottom: 1px solid #404040;
+}
+
+.module-container:last-child {
+    border-bottom: none;
+}
+
+.module-content {
+    height: 100%;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Module Divider */
+.module-divider {
+    height: 6px;
+    background: #4a9eff;
+    cursor: ns-resize;
+    position: relative;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 8px;
+    transition: background 0.2s;
+}
+
+.module-divider:hover {
+    background: #5fadff;
+}
+
+.module-divider.dragging {
+    background: #6fbfff;
+}
+
+.divider-swap-btn {
+    background: #2a2a2a;
+    border: 1px solid #404040;
+    color: #a0a0a0;
+    width: 24px;
+    height: 24px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    padding: 0;
+    line-height: 1;
+}
+
+.divider-swap-btn:hover {
+    background: #333333;
+    color: #ffffff;
+    border-color: #4a9eff;
+}
+
+.divider-swap-btn:active {
+    background: #4a9eff;
+    color: #ffffff;
+}
+
+/* Context Menu */
+.context-menu {
+    position: fixed;
+    background: #2a2a2a;
+    border: 1px solid #404040;
+    border-radius: 4px;
+    padding: 4px 0;
+    min-width: 180px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+}
+
+.context-menu-item {
+    padding: 10px 16px;
+    color: #e0e0e0;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 0.15s;
+    user-select: none;
+}
+
+.context-menu-item:hover {
+    background: #333333;
+}
+
+.context-menu-item.disabled {
+    color: #606060;
+    cursor: not-allowed;
+}
+
+.context-menu-item.disabled:hover {
+    background: transparent;
+}
+
+
+/* Scrollbar Styling */
+.module-container::-webkit-scrollbar {
+    width: 10px;
+}
+
+.module-container::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+
+.module-container::-webkit-scrollbar-thumb {
+    background: #404040;
+    border-radius: 5px;
+}
+
+.module-container::-webkit-scrollbar-thumb:hover {
+    background: #505050;
+}
+
+
+
+/* Scrollbar Styling */
+.module-container::-webkit-scrollbar {
+    width: 10px;
+}
+
+.module-container::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+
+.module-container::-webkit-scrollbar-thumb {
+    background: #404040;
+    border-radius: 5px;
+}
+
+.module-container::-webkit-scrollbar-thumb:hover {
+    background: #505050;
+}

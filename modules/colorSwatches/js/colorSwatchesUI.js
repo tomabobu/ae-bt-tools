@@ -32,6 +32,8 @@ var ColorSwatchesUI = (function () {
         // Create module UI container
         const container = document.getElementById('colorSwatches');
 
+        console.log(container);
+
         // Build the UI
         buildUI(container);
     }
